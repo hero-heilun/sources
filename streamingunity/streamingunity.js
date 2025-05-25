@@ -18,7 +18,7 @@ async function searchResults(keyword) {
   const results = titles.map((item) => {
     const posterImage = item.images?.find(img => img.type === 'poster');
     return {
-      title: item.name,
+      title: item.name?.replaceAll('amp;', '').replaceAll('&#39;', "'") || '',
       image: posterImage?.filename ? `https://cdn.streamingunity.to/images/${posterImage.filename}` : '',
       href: `https://streamingunity.to/it/titles/${item.id}-${item.slug}`,
     };
@@ -48,8 +48,8 @@ async function extractDetails(url) {
 
   return JSON.stringify([
     {
-      description: titleData.plot || "N/A",
-      aliases: titleData.original_name || "N/A",
+      description: titleData.plot?.replaceAll('amp;', '').replaceAll('&#39;', "'") || "N/A",
+      aliases: titleData.original_name?.replaceAll('amp;', '').replaceAll('&#39;', "'") || "N/A",
       airdate: titleData.release_date || "N/A",
     },
   ]);
@@ -91,13 +91,7 @@ async function extractEpisodes(url) {
             seasonEpisodes.forEach(episode => {
               episodes.push({
                 href: `https://streamingunity.to/iframe/${titleId}?episode_id=${episode.id}`,
-                number: episode.number || episodes.length + 1,
-                id: episode.id,
-                name: episode.name || `Episode ${episode.number}`,
-                plot: episode.plot || "",
-                imageFilename: episode.images?.[0]?.filename || "",
-                titleId: titleId,
-                season: season
+                number: episode.number || episodes.length + 1
               });
             });
           }
@@ -110,13 +104,7 @@ async function extractEpisodes(url) {
     if (!hasEpisodes) {
       episodes.push({
         href: `https://streamingunity.to/iframe/${titleId}`,
-        number: 1,
-        id: titleId,
-        name: titleData.name || "Movie",
-        plot: titleData.plot || "",
-        imageFilename: "",
-        titleId: titleId,
-        season: 1
+        number: 1
       });
     }
 
@@ -133,7 +121,6 @@ async function extractStreamUrl(url) {
     if (!url.includes('/it/iframe') && !url.includes('/en/iframe')) {
       modifiedUrl = url.replace('/iframe', '/it/iframe');
     }
-
     const response1 = await fetchv2(modifiedUrl);
     const html1 = await response1.text();
 
