@@ -1,4 +1,9 @@
 function searchResults(html) {
+    if (typeof html !== 'string') {
+        console.error('Invalid HTML input: expected a string.');
+        return [];
+    }
+
     const results = [];
 
     const titleRegex = /<h2[^>]*>(.*?)<\/h2>/;
@@ -8,26 +13,39 @@ function searchResults(html) {
     const itemRegex = /<div class="my-2 w-64[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/g;
     const items = html.match(itemRegex) || [];
 
-    items.forEach((itemHtml) => {
-       const titleMatch = itemHtml.match(titleRegex);
-       const title = titleMatch ? decodeHTMLEntities(titleMatch[1].trim()) : '';
+    items.forEach((itemHtml, index) => {
+        try {
+            if (typeof itemHtml !== 'string') {
+                console.error(`Item ${index} is not a string.`);
+                return;
+            }
 
-       const hrefMatch = itemHtml.match(hrefRegex);
-       const href = hrefMatch ? hrefMatch[1].trim() : '';
+            const titleMatch = itemHtml.match(titleRegex);
+            const title = titleMatch?.[1]?.trim() ?? '';
 
-       const imgMatch = itemHtml.match(imgRegex);
-       const imageUrl = imgMatch ? imgMatch[1].trim() : '';
+            const hrefMatch = itemHtml.match(hrefRegex);
+            const href = hrefMatch?.[1]?.trim() ?? '';
 
-       if (title && href) {
-           results.push({
-               title: title,
-               image: imageUrl,
-               href: href
-           });
-       }
+            const imgMatch = itemHtml.match(imgRegex);
+            const imageUrl = imgMatch?.[1]?.trim() ?? '';
+
+            if (title && href) {
+                results.push({
+                    title: decodeHTMLEntities(title),
+                    image: imageUrl,
+                    href: href
+                });
+            } else {
+                console.error(`Missing title or href in item ${index}`);
+            }
+        } catch (err) {
+            console.error(`Error processing item ${index}:`, err);
+        }
     });
+
     return results;
 }
+
 
 function extractDetails(html) {
   const details = [];
