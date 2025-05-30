@@ -24,24 +24,36 @@ function searchResults(html) {
 
 function extractDetails(html) {
   const details = [];
+  let description = 'N/A';
+  let aliases = 'N/A';
+  let airdate = 'N/A';
+  const genres = [];
 
-  const descriptionMatch = html.match(/<font[^>]*>([\s\S]*?)<\/font>/);
-  let description = descriptionMatch ? descriptionMatch[1].trim() : '';
+  const airdateMatch = html.match(
+    /<div class="font-size-16 text-white mt-2">\s*<span>\s*السنة\s*:\s*(\d{4})\s*<\/span>\s*<\/div>/
+  );
+  if (airdateMatch) airdate = airdateMatch[1];
 
-  if (description.includes('<font style="box-sizing:border-box; vertical-align:inherit">')) {
-    description = description.replace('<font style="box-sizing:border-box; vertical-align:inherit">', '');
-    description = description.replace('</font>', '');
+  const descriptionMatch = html.match(
+    /<div class="text-white font-size-18"[^>]*>[\s\S]*?<p>([\s\S]*?)<\/p>/
+  );
+  if (descriptionMatch) {
+    description = decodeHTMLEntities(descriptionMatch[1].replace(/<[^>]+>/g, '').trim());
   }
 
-  const languageMatch = html.match(/اللغة : ([^<]+)/);
-  let aliases = languageMatch ? languageMatch[1].trim() : 'N/A';
-
-  let airdate = 'N/A';
+  const genresMatch = html.match(/<div class="font-size-16 d-flex align-items-center mt-3">([\s\S]*?)<\/div>/);
+  const genresHtml = genresMatch ? genresMatch[1] : '';
+  
+  const genreAnchorRe = /<a[^>]*>([^<]+)<\/a>/g;
+  let genreMatch;
+  while ((genreMatch = genreAnchorRe.exec(genresHtml)) !== null) {
+    genres.push(decodeHTMLEntities(genreMatch[1].trim()));
+  }
 
   details.push({
     description: description,
-    alias: aliases,
-    airdate: airdate
+    airdate: airdate,
+    aliases: genres.join(', ') || 'N/A'
   });
 
   console.log(details);
@@ -141,4 +153,22 @@ async function extractStreamUrl(html) {
 
   console.log(stream);
   return stream;
+}
+
+function decodeHTMLEntities(text) {
+    text = text.replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(dec));
+
+    const entities = {
+        '&quot;': '"',
+        '&amp;': '&',
+        '&apos;': "'",
+        '&lt;': '<',
+        '&gt;': '>'
+    };
+
+    for (const entity in entities) {
+        text = text.replace(new RegExp(entity, 'g'), entities[entity]);
+    }
+
+    return text;
 }
