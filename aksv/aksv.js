@@ -25,18 +25,31 @@ function searchResults(html) {
 function extractDetails(html) {
   const details = [];
 
-  const descriptionMatch = html.match(/<font[^>]*>([\s\S]*?)<\/font>/);
-  let description = descriptionMatch ? descriptionMatch[1].trim() : '';
+  let description = 'N/A';
+  let aliases = 'N/A';
+  let airdate = 'N/A';
 
-  if (description.includes('<font style="box-sizing:border-box; vertical-align:inherit">')) {
-    description = description.replace('<font style="box-sizing:border-box; vertical-align:inherit">', '');
-    description = description.replace('</font>', '');
+  const airdateMatch = html.match(
+    /<div class="font-size-16 text-white mt-2">\s*<span>\s*السنة\s*:\s*(\d{4})\s*<\/span>\s*<\/div>/
+  );
+  if (airdateMatch) {
+    airdate = airdateMatch[1];
   }
 
-  const languageMatch = html.match(/اللغة : ([^<]+)/);
-  let aliases = languageMatch ? languageMatch[1].trim() : 'N/A';
+  const aliasMatch = html.match(
+    /<span>\s*(مدة (?:المسلسل|الفيلم)\s*:\s*[^<]+)<\/span>/i
+  );
+  if (aliasMatch) {
+    aliases = aliasMatch[1].trim();
+  }
 
-  let airdate = 'N/A';
+  const descriptionMatch = html.match(
+    /<div class="text-white font-size-18"[^>]*>[\s\S]*?<p>([\s\S]*?)<\/p>/
+  );
+  if (descriptionMatch) {
+    const rawDescription = descriptionMatch[1].replace(/<[^>]+>/g, '').trim();
+    description = decodeHTMLEntities(rawDescription);
+  }
 
   details.push({
     description: description,
@@ -141,4 +154,22 @@ async function extractStreamUrl(html) {
 
   console.log(stream);
   return stream;
+}
+
+function decodeHTMLEntities(text) {
+    text = text.replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(dec));
+
+    const entities = {
+        '&quot;': '"',
+        '&amp;': '&',
+        '&apos;': "'",
+        '&lt;': '<',
+        '&gt;': '>'
+    };
+
+    for (const entity in entities) {
+        text = text.replace(new RegExp(entity, 'g'), entities[entity]);
+    }
+
+    return text;
 }
