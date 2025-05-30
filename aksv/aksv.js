@@ -50,17 +50,19 @@ function extractDetails(html) {
 
 function extractEpisodes(html) {
   const episodes = [];
-  
-  let movieRegex = /<a[^>]+href=["']([^"']+)["'][^>]+class=["'][^"']*link-btn link-show[^"']*["'][^>]*>/i;
-  let movieMatch = movieRegex.exec(html);
-  
+
+  const movieRegex = /<a[^>]+href=["']([^"']+)["'][^>]+class=["'][^"']*link-btn link-show[^"']*["'][^>]*>/i;
+  const movieMatch = movieRegex.exec(html);
+
   if (movieMatch && movieMatch[1]) {
     episodes.push({
       href: movieMatch[1],
-      number: "1"  
+      number: "1"
     });
   } else {
-    const episodeBlocks = html.match(/<div class="col-md-auto text-center pb-3 pb-md-0">[\s\S]*?<a href=["']([^"']+)["'][^>]*>[\s\S]*?<\/a>/g);
+    const reversedHtml = html.split('\n').reverse().join('\n');
+
+    const episodeBlocks = reversedHtml.match(/<div class="col-md-auto text-center pb-3 pb-md-0">[\s\S]*?<a href=["']([^"']+)["'][^>]*>[\s\S]*?<\/a>/g);
 
     if (episodeBlocks) {
       episodeBlocks.forEach((block, index) => {
@@ -74,10 +76,10 @@ function extractEpisodes(html) {
       });
     }
   }
+
   console.log(JSON.stringify(episodes));
   return episodes;
 }
-
 
 async function extractStreamUrl(html) {
   let stream = null;
