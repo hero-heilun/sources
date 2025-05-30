@@ -24,37 +24,36 @@ function searchResults(html) {
 
 function extractDetails(html) {
   const details = [];
-
   let description = 'N/A';
   let aliases = 'N/A';
   let airdate = 'N/A';
+  const genres = [];
 
   const airdateMatch = html.match(
     /<div class="font-size-16 text-white mt-2">\s*<span>\s*السنة\s*:\s*(\d{4})\s*<\/span>\s*<\/div>/
   );
-  if (airdateMatch) {
-    airdate = airdateMatch[1];
-  }
-
-  const aliasMatch = html.match(
-    /<span>\s*(مدة (?:المسلسل|الفيلم)\s*:\s*[^<]+)<\/span>/i
-  );
-  if (aliasMatch) {
-    aliases = aliasMatch[1].trim();
-  }
+  if (airdateMatch) airdate = airdateMatch[1];
 
   const descriptionMatch = html.match(
     /<div class="text-white font-size-18"[^>]*>[\s\S]*?<p>([\s\S]*?)<\/p>/
   );
   if (descriptionMatch) {
-    const rawDescription = descriptionMatch[1].replace(/<[^>]+>/g, '').trim();
-    description = decodeHTMLEntities(rawDescription);
+    description = decodeHTMLEntities(descriptionMatch[1].replace(/<[^>]+>/g, '').trim());
+  }
+
+  const genresMatch = html.match(/<div class="font-size-16 d-flex align-items-center mt-3">([\s\S]*?)<\/div>/);
+  const genresHtml = genresMatch ? genresMatch[1] : '';
+  
+  const genreAnchorRe = /<a[^>]*>([^<]+)<\/a>/g;
+  let genreMatch;
+  while ((genreMatch = genreAnchorRe.exec(genresHtml)) !== null) {
+    genres.push(decodeHTMLEntities(genreMatch[1].trim()));
   }
 
   details.push({
     description: description,
-    alias: aliases,
-    airdate: airdate
+    airdate: airdate,
+    aliases: genres.join(', ') || 'N/A'
   });
 
   console.log(details);
