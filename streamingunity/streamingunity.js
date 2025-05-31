@@ -1,6 +1,6 @@
 async function searchResults(keyword) {
   const response = await fetchv2(
-    `https://streamingunity.to/it/archive?search=${keyword}`
+    `https://streamingunity.bio/it/archive?search=${keyword}`
   );
   const html = await response.text();
 
@@ -19,8 +19,8 @@ async function searchResults(keyword) {
     const posterImage = item.images?.find(img => img.type === 'poster');
     return {
       title: item.name?.replaceAll('amp;', '').replaceAll('&#39;', "'") || '',
-      image: posterImage?.filename ? `https://cdn.streamingunity.to/images/${posterImage.filename}` : '',
-      href: `https://streamingunity.to/it/titles/${item.id}-${item.slug}`,
+      image: posterImage?.filename ? `https://cdn.streamingunity.bio/images/${posterImage.filename}` : '',
+      href: `https://streamingunity.bio/it/titles/${item.id}-${item.slug}`,
     };
   }).filter(item => item.image) || [];
 
@@ -90,7 +90,7 @@ async function extractEpisodes(url) {
             hasEpisodes = true;
             seasonEpisodes.forEach(episode => {
               episodes.push({
-                href: `https://streamingunity.to/iframe/${titleId}?episode_id=${episode.id}`,
+                href: `https://streamingunity.bio/iframe/${titleId}?episode_id=${episode.id}`,
                 number: episode.number || episodes.length + 1
               });
             });
@@ -103,7 +103,7 @@ async function extractEpisodes(url) {
     
     if (!hasEpisodes) {
       episodes.push({
-        href: `https://streamingunity.to/iframe/${titleId}`,
+        href: `https://streamingunity.bio/iframe/${titleId}`,
         number: 1
       });
     }
