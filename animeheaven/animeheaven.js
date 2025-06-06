@@ -53,24 +53,18 @@ function extractDetails(html) {
 
 function extractEpisodes(html) {
     const episodes = [];
-    const baseUrl = "https://animeheaven.me/episode.php?";
-  
-    const episodeRegex = /<a href='episode\.php\?([^']+)'[^>]*>.*?<div class='watch2 bc'\s*>(\d+)<\/div>/gs;
+    const baseUrl = "https://animeheaven.me/gate.php";
+
+    const episodeRegex = /<a href="gate\.php" class="[^"]*" id="([^"]+)"[^>]*>.*?<div class="watch2 bc[^"]*">(\d+)(?:raw|un)?<\/div>/gs;
     let match;
-  
+
     while ((match = episodeRegex.exec(html)) !== null) {
-        let href = match[1];
-        const number = parseInt(match[2], 10);
-      
-        if (!href.startsWith("https")) {
-            href = href.startsWith("/") ? baseUrl + href : baseUrl + "/" + href;
-        }
-        episodes.push({
-            href: href,
-            number: number.toString()
-        });
+        const id = match[1];
+        const number = match[2];
+        const href = `${baseUrl}?id=${id}`;
+        episodes.push({ href, number });
     }
-  
+
     episodes.reverse();
     return episodes;
 }
