@@ -218,11 +218,11 @@ function selectHoster(finishedList) {
 }
 
 
-// Debugging function to send logs
+// Local Debugging function to send logs
 async function sendLog(message) {
     // send http://192.168.2.130/sora-module/log.php?action=add&message=message
     console.log(message);
-    // return;
+    return;
 
     await fetch('http://192.168.2.130/sora-module/log.php?action=add&message=' + encodeURIComponent(message))
     .catch(error => {
