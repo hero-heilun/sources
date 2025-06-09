@@ -170,7 +170,7 @@ function selectHoster(finishedList) {
     // };
 
   // Define the preferred providers and languages
-  const providerList = ["VOE", "SpeedFiles", "Vidmoly", "DoodStream"];
+  const providerList = ["VOE", "SpeedFiles", "Vidmoly", "DoodStream", "Vidoza", "mp4upload"];
     const languageList = ["mit Untertitel Englisch", "mit Untertitel Deutsch"];
 
   
