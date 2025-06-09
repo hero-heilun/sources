@@ -1,45 +1,39 @@
-function searchResults(html) {
-  const results = [];
-  const filmListRegex = /<div class='similarimg'><div class='p1'>([\s\S]*?)<\/div><\/div>/g;
-  const items = html.matchAll(filmListRegex);
+async function searchResults(keyword) {
+    const url = `https://animeheaven.me/fastsearch.php?xhr=1&s=${encodeURIComponent(keyword)}`;
+    const response = await fetchv2(url);
+    const html = await response.text();
+    const results = [];
 
-  for (const item of items) {
-      const itemHtml = item[1];
-      
-      const titleMatch = itemHtml.match(/<a href='[^']+' class='c'>([^<]+)<\/a>/);
-      const hrefMatch = itemHtml.match(/<a href='([^']+)'/);
-      const imgMatch = itemHtml.match(/<img class='coverimg' src='([^']+)' alt='([^']+)'>/);
+    const itemRegex = /<a class='ac' href='([^']+)'>[\s\S]*?<img class='coverimg' src='([^']+)' alt='[^']*'>[\s\S]*?<div class='fastname'>([^<]+)<\/div>/g;
+    let match;
 
-      if (titleMatch && hrefMatch && imgMatch) {
-          const title = titleMatch[1];
-          const href = hrefMatch[1];
-          const imageUrl = imgMatch[1];
-          
-          const fullHref = `https://animeheaven.me/${href}`;
-          const fullImageUrl = `https://animeheaven.me/${imageUrl}`;
+    while ((match = itemRegex.exec(html)) !== null) {
+        const href = `https://animeheaven.me${match[1]}`;
+        const image = `https://animeheaven.me${match[2]}`;
+        const title = match[3].trim();
 
-          results.push({
-              title: title.trim(),
-              image: fullImageUrl.trim(),
-              href: fullHref.trim()
-          });
-      }
-  }
-  return results;
+        results.push({ title, image, href });
+    }
+
+    return JSON.stringify(results);
 }
 
-function extractDetails(html) {
+
+
+async function extractDetails(url) {
+    const response = await fetchv2(url);
+    const html = await response.text();
     const details = [];
-   
+
     const descriptionMatch = html.match(/<div class='infodes c'>([^<]+)<\/div>/);
     let description = descriptionMatch ? descriptionMatch[1] : '';
-    
+
     const aliasesMatch = html.match(/<div class='infotitle c'>([^<]+)<\/div>/);
     let aliases = aliasesMatch ? aliasesMatch[1] : '';
-    
+
     const airdateMatch = html.match(/Year: <div class='inline c2'>([^<]+)<\/div>/);
     let airdate = airdateMatch ? airdateMatch[1] : '';
-    
+
     if (description && airdate) {
         details.push({
             description: description,
@@ -47,36 +41,44 @@ function extractDetails(html) {
             airdate: airdate
         });
     }
-    
-    return details;
+
+    return JSON.stringify(details);
 }
 
-function extractEpisodes(html) {
+async function extractEpisodes(url) {
+    const response = await fetchv2(url);
+    const html = await response.text();
     const episodes = [];
-    const baseUrl = "https://animeheaven.me/episode.php?";
-  
-    const episodeRegex = /<a href='episode\.php\?([^']+)'[^>]*>.*?<div class='watch2 bc'\s*>(\d+)<\/div>/gs;
+    const episodeRegex = /<a href='gate\.php'[^>]+id='([^']+)'[^>]*>[\s\S]*?<div class='watch2 bc[^']*'[^>]*>([^<]+)<\/div>/g;
     let match;
-  
+
     while ((match = episodeRegex.exec(html)) !== null) {
-        let href = match[1];
-        const number = parseInt(match[2], 10);
-      
-        if (!href.startsWith("https")) {
-            href = href.startsWith("/") ? baseUrl + href : baseUrl + "/" + href;
+        const id = match[1];
+        const rawNumber = match[2].trim();
+        const number = parseInt(rawNumber.match(/\d+/)?.[0], 10);
+        if (!isNaN(number)) {
+            episodes.push({
+                href: id,
+                number: number
+            });
         }
-        episodes.push({
-            href: href,
-            number: number.toString()
-        });
     }
-  
+
     episodes.reverse();
-    return episodes;
+    return JSON.stringify(episodes);
 }
 
-function extractStreamUrl(html) {
-    const sourceRegex = /<source\s+src=['"]([^'"]+)['"][^>]*type=['"]video\/mp4['"][^>]*>/i;
-    const match = html.match(sourceRegex);
-    return match ? match[1].replace(/&amp;/g, '&') : null;
+
+async function extractStreamUrl(id) {
+    const cookieHeader = `key=${id}`;
+    const headers = {
+        Cookie: cookieHeader
+    };
+    const html = await fetchv2(`https://animeheaven.me/gate.php`, headers);
+    console.log(JSON.stringify(html));
+    const response = await html.text();
+    const sourceRegex = /<source\s+src=(["'])([^"']+)\1[^>]*type=(["'])video\/mp4\3[^>]*>/i;
+    const match = response.match(sourceRegex);
+    console.log("Extracted stream URL: " + match);
+    return match ? match[2].replace(/&amp;/g, '&') : null;
 }
