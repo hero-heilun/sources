@@ -1,6 +1,6 @@
 async function searchResults(keyword) {
     const results = [];
-    const response = await fetchv2(`https://www.animetoast.cc/?s=${keyword}`);
+    const response = await soraFetch(`https://www.animetoast.cc/?s=${keyword}`);
     const html = await response.text();
 
     const regex = /<a href="(https:\/\/www\.animetoast\.cc\/[^"]+)"[^>]*title="([^"]+)"[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"[^>]*>[\s\S]*?<\/a>/g;
@@ -34,7 +34,7 @@ async function searchResults(keyword) {
 
 async function extractDetails(url) {
     const results = [];
-    const response = await fetchv2(url);
+    const response = await soraFetch(url);
     const html = await response.text();
 
     let description = '';
@@ -56,124 +56,187 @@ async function extractDetails(url) {
 
 async function extractEpisodes(url) {
     const results = [];
-    const response = await fetchv2(url);
+    const response = await soraFetch(url);
     const html = await response.text();
 
     let episodes = [];
     try {
-        episodes = await extractEpisodeHosts(html);
+        episodes = await extractEpisodeHosts(html, url);
     } catch (error) {
         sendLog("Error extracting episodes: " + error.message);
         return JSON.stringify([{ error: "Failed to extract episodes" }]);
     }
 
+
     sendLog(JSON.stringify(episodes));
-    return JSON.stringify(episodes);
+    if (episodes.length === 0) {
+        sendLog("No episodes found");
+        return JSON.stringify([{ error: "No episodes found" }]);
+    }
+    let count = 0;
+    for (const episodeUrl of episodes) {
+    count++;
+        results.push({
+            href: episodeUrl,
+            number: count
+        });
+    }
+    sendLog("Extracted " + count + " episodes");
+    return JSON.stringify(results);
 }
 
-  async function extractEpisodeHosts(html) {
+  async function extractEpisodeHosts(html, url) {
         // <li class="active">
         //                     <a data-toggle="tab" href="#multi_link_tab0">Voe</a>
         //                 </li>
-    const results = [];
+    const results = {}
     const tabRegex = /<a[^>]*data-toggle=["']tab["'][^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/g;
 
     const tabMatches = [...html.matchAll(tabRegex)];
     sendLog("Tab matches: " + JSON.stringify(tabMatches));
-    
-    for (const tabMatch of tabMatches) {
-      const tabHref = tabMatch[1].trim();
-      const tabId = tabHref.startsWith('#') ? tabHref.substring(1) : tabHref;
-      sendLog("Tab ID: " + tabId);
-      const divRegex = new RegExp(`<div id="${tabId}"[^>]*>(.*?)<\/div>`, 's');
-      const divMatch = html.match(divRegex);
-        sendLog("Div match: " + JSON.stringify(divMatch));
-        if (!divMatch) {
-            sendLog("No div match found");
-            continue;
-        }
-
-      if (divMatch) {
-        const epRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>[\s\S]*?Ep\.\s*(\d+)\s*<\/a>/g;
-        const epMatches = [...divMatch[1].matchAll(epRegex)];
-        sendLog("Episode matches: " + JSON.stringify(epMatches));
-
-        results.push(...epMatches.map(match => ({
-          href: match[1],
-          number: parseInt(match[2], 10)
-        })));
-      }
+    if (tabMatches.length === 0) {
+        sendLog("No tab matches found");
+        return results; // Return empty array if no tabs found
     }
 
-    // Sort episodes by number
-    results.sort((a, b) => a.number - b.number);
-    sendLog("Sorted episodes: " + JSON.stringify(results));
+    if (!tabMatches[0]) {
+      sendLog("No tab match found");
+      return results; // Return empty array if no tab match found
+    }
     
+    for (const match of tabMatches) {
+      const tabHref = match[1].trim();
+      sendLog("Tab Href: " + tabHref);
+      const tabId = tabHref.startsWith('#') ? tabHref.substring(1) : tabHref;
+      sendLog("Tab ID: " + tabId);
+      const provider = match[2].trim().toLowerCase();
+      
+      // The issue is here - the regex is capturing only the number part after "multi_link_tab"
+      // but we need to match the full ID
+      const divRegex = /<div id="(multi_link_tab[^"]+)"[^>]*>([\s\S]*?)<\/div>/gs;
+      
+      const divMatch = [...html.matchAll(divRegex)];
+      // sendLog("Div matches: " + JSON.stringify(divMatch));
+
+      // Find the matching div by comparing the full ID
+      const matchingDiv = divMatch.filter(div => div[1] === tabId);
+
+      // sendLog("Matching Div: " + JSON.stringify(matchingDiv));
+
+      if (!matchingDiv || matchingDiv.length === 0) {
+        sendLog("No div match found for tab ID: " + tabId);
+        continue; // Skip if no matching div found
+      }
 
 
+        const epRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>[\s\S]*?Ep\.\s*(\d+)\s*<\/a>/g;
+        const epMatches = [...matchingDiv[0][2].matchAll(epRegex)];
+      // sendLog("Episode matches: " + JSON.stringify(epMatches));
+      // https://www.animetoast.cc/summer-pockets-ger-sub/?link=0
+
+      // results:
+      /*
+      {
+        "voe": [
+        "0", // ?link=0
+        "1", // ?link=1
+        "2"  // ?link=2
+        ],
+        "doodstream": [
+        "3", // ?link=3
+        "4", // ?link=4
+        "5"  // ?link=5
+        ]
+      }
+      */
+      if (!results[provider]) {
+        results[provider] = [];
+      }
+      results[provider].push(...epMatches.map(match => {
+        const url = match[1];
+        const linkMatch = url.match(/[?&]link=(\d+)/);
+        return linkMatch ? linkMatch[1] : null;
+      }).filter(Boolean));
+      sendLog(`Extracted ${epMatches.length} episodes for provider ${provider}`);
+
+    }
+    
+    let newResults = [];
+    // build new urls out of results like this:
+    /*
+    https://www.animetoast.cc/summer-pockets-ger-sub/#voe=0,doodstream=12,playn=24,fmoon=36,mp4upload=48
+    https://www.animetoast.cc/summer-pockets-ger-sub/#voe=1,doodstream=13,playn=25,fmoon=37,mp4upload=49
+    ...
+    */
+  //  loop through results and build new urls
+    const maxLength = Math.max(...Object.values(results).map(arr => arr.length));
+    for (let i = 0; i < maxLength; i++) {
+      let newUrl = url.split('#')[0] + '#';
+      for (const [provider, links] of Object.entries(results)) {
+        if (links[i]) {
+          newUrl += `${provider}=${links[i]},`;
+        }
+      }
+      newUrl = newUrl.slice(0, -1); // Remove trailing comma
+      newResults.push(newUrl);
+    }
+
+    // sendLog("New Results: " + JSON.stringify(newResults));
+    return newResults;
 }
 
-
-// async function extractStreamUrl(url) {
-//     const response = await fetchv2(url);
-//     const html = await response.text();
-
-//     const voeRegex = /<a href="https:\/\/voe\.sx\/([a-zA-Z0-9]+)"[^>]*>/;
-//     const match = html.match(voeRegex);
-
-//     if (match && match[1]) {
-//         const videoId = match[1];
-//         const streamUrl = `https://kristiesoundsimply.com/e/${videoId}`;
-
-//         const streamResponse = await fetchv2(streamUrl);
-//         const streamHtml = await streamResponse.text();
-
-//         const mp4Regex = /'mp4': '([^']+)'/;
-//         const mp4Match = streamHtml.match(mp4Regex);
-
-//         if (mp4Match && mp4Match[1]) {
-//             const decodedUrl = atob(mp4Match[1]); 
-//             return decodedUrl;
-//         }
-//     }
-//     return null;
-// }
-
-// Debugging function to send logs
-async function sendLog(message) {
-    // send http://192.168.2.130/sora-module/log.php?action=add&message=message
-    console.log(message);
-    // return;
-
-    await fetch('http://192.168.2.130/sora-module/log.php?action=add&message=' + encodeURIComponent(message))
-    .catch(error => {
-        console.error('Error sending log:', error);
-    });
-}
-
-
-/* Replace your extractStreamUrl function with the script below */
-
-/**
- * @name global_extractor.js
- * @description Global extractor to be used in Sora Modules
- * @author Cufiy
- * @license MIT
- * @date 2025-06-09 16:52:50
- * @note This file is automatically generated.
- */
 
 
 async function extractStreamUrl(url) {
   try {
-    const response = await fetchv2(url);
-    const html = await response.text();
 
-    // const voeRegex = /<a href="https:\/\/voe\.sx\/([a-zA-Z0-9]+)"[^>]*>/;
-    // const match = html.match(voeRegex);
+    // now we need to extract the providers from the url
+    // e.g. https://www.animetoast.cc/sword-art-online-alternative-gun-gale-online-ii-ger-dub/#voe=2,doodstream=14,playn=26,fmoon=38,mp4upload=50
+    const baseUrl = url.split('#')[0];
+    const providersString = url.split('#')[1];
+    if (!providersString) {
+      sendLog("No providers found in URL: " + url);
+      return JSON.stringify([{ provider: "Error", link: "No providers found in URL" }]);
+    }
+    sendLog("Base URL: " + baseUrl);
+    sendLog("Providers String: " + providersString);
+    const providersArray = providersString.split(',');
+    sendLog("Providers Array: " + JSON.stringify(providersArray));
+    // Create a providers object from the providersArray
+    let tempProviders = {};
+    providersArray.forEach(provider => {
+      const [name, id] = provider.split('=');
+      tempProviders[name] = id;
+    });
 
+    // rename fmoon to filemoon
+    if (tempProviders['fmoon']) {
+      tempProviders['filemoon'] = tempProviders['fmoon'];
+      delete tempProviders['fmoon'];
+    }
 
-    let providers = {};
+    if (tempProviders['doodstream']) {
+      delete tempProviders['doodstream']; // Idk why, but it just crashes the app
+    }
+
+    // remove any providers that are not in the list of available providers, using eval(`typeof ${provider}Extractor`) !== "function"
+    for (const provider in tempProviders) {
+      if (eval(`typeof ${provider}Extractor`) !== "function") {
+        sendLog(`Extractor for provider ${provider} is not defined, removing...`);
+        delete tempProviders[provider];
+      }
+    }
+
+    
+
+    sendLog("Providers Object: " + JSON.stringify(tempProviders));
+    let providers = await extractProviders(tempProviders, baseUrl);
+    sendLog("Extracted Providers: " + JSON.stringify(providers));
+    if (Object.keys(providers).length === 0) {
+      sendLog("No valid providers found, returning error");
+      return JSON.stringify([{ provider: "Error", link: "No valid providers found" }]);
+    }
+
 
     // Logic to populate providers
     // ...
@@ -210,6 +273,84 @@ async function extractStreamUrl(url) {
     return null;
   }
 }
+
+async function extractProviders(tempProviders, baseUrl) {
+  let providers = {};
+  for (const [name, id] of Object.entries(tempProviders)) {
+    try {
+      const response = await fetch(`${baseUrl}?link=${id}`);
+      const data =  response.text ? await response.text() : response;
+      // get the iframe src from the data
+      const iframeRegex = /<iframe[^>]+src="([^"]+)"[^>]*>/;
+      const iframeMatch = data.match(iframeRegex);
+      if (iframeMatch && iframeMatch[1]) {
+        const iframeSrc = iframeMatch[1];
+        // check if the iframeSrc is a valid URL
+        if (iframeSrc.startsWith("http") || iframeSrc.startsWith("https")) {
+          providers[iframeSrc] = name; // Use the name as the key
+          sendLog(`Provider ${name} found: ${iframeSrc}`);
+        }
+      } else {
+        // get the href from:
+        /*<div id="player-embed" >
+							<a href="https://voe.sx/af0gf1xla2c4" target="_blank">
+              */
+            //  get the div with id player-embed
+      const divRegex = /<div id="player-embed"[^>]*>\s*<a href="([^"]+)"[^>]*>/;
+      const divMatch = data.match(divRegex);
+      if (divMatch && divMatch[1]) {
+        const href = divMatch[1];
+        // check if the href is a valid URL
+        if (href.startsWith("http") || href.startsWith("https")) {
+          providers[href] = name; // Use the name as the key
+          sendLog(`Provider ${name} found: ${href}`);
+        }
+      } else {
+               
+        sendLog(`No iframe or div found for provider ${name}, skipping...`);
+
+        continue; // Skip if no iframe or div found
+      }
+      }
+    } catch (error) {
+      sendLog("Error fetching provider " + name + ": " + error);
+    }
+  }
+  return providers;
+}
+
+// node
+if (typeof module !== 'undefined' && module.exports) {
+  // let eps = extractEpisodes("https://www.animetoast.cc/sword-art-online-alternative-gun-gale-online-ii-ger-dub/");
+  // console.log(eps);
+  let testStreams = extractStreamUrl("https://www.animetoast.cc/sword-art-online-alternative-gun-gale-online-ii-ger-dub/#voe=2,doodstream=14,playn=26,fmoon=38,mp4upload=50");
+  console.log(testStreams);
+}
+
+// Debugging function to send logs
+async function sendLog(message) {
+    // send http://192.168.2.130/sora-module/log.php?action=add&message=message
+    console.log(message);
+    // return;
+
+    await fetch('http://192.168.2.130/sora-module/log.php?action=add&message=' + encodeURIComponent(message))
+    .catch(error => {
+        console.error('Error sending log:', error);
+    });
+}
+
+/* Replace your extractStreamUrl function with the script below */
+
+/**
+ * @name global_extractor.js
+ * @description Global extractor to be used in Sora Modules
+ * @author Cufiy
+ * @license MIT
+ * @date 2025-06-09 16:52:50
+ * @note This file is automatically generated.
+ */
+
+
 
 function globalExtractor(providers) {
   for (const [url, provider] of Object.entries(providers)) {
@@ -702,7 +843,7 @@ async function vidmolyExtractor(html, url = null) {
     const streamUrl = iframeMatch[1].startsWith("//")
       ? "https:" + iframeMatch[1]
       : iframeMatch[1];
-    const responseTwo = await fetchv2(streamUrl);
+    const responseTwo = await soraFetch(streamUrl);
     const htmlTwo = await responseTwo.text();
     const m3u8Match = htmlTwo.match(/sources:\s*\[\{file:"([^"]+\.m3u8)"/);
     return m3u8Match ? m3u8Match[1] : null;
