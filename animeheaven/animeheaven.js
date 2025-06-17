@@ -1,3 +1,10 @@
+function cleanTitle(title) {
+    return title
+        .replace(/&#8217;/g, "'")  
+        .replace(/&#8211;/g, "-")  
+        .replace(/&#[0-9]+;/g, ""); 
+}
+
 async function searchResults(keyword) {
     const url = `https://animeheaven.me/fastsearch.php?xhr=1&s=${encodeURIComponent(keyword)}`;
     const response = await fetchv2(url);
@@ -10,15 +17,14 @@ async function searchResults(keyword) {
     while ((match = itemRegex.exec(html)) !== null) {
         const href = `https://animeheaven.me${match[1]}`;
         const image = `https://animeheaven.me${match[2]}`;
-        const title = match[3].trim();
+        const rawTitle = match[3].trim();
+        const title = cleanTitle(rawTitle);
 
         results.push({ title, image, href });
     }
 
     return JSON.stringify(results);
 }
-
-
 
 async function extractDetails(url) {
     const response = await fetchv2(url);
