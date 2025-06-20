@@ -5,7 +5,7 @@
 async function searchResults(keyword) {
     try {
         const encodedKeyword = encodeURIComponent(keyword);
-        const responseText = await fetchv2(`https://bshar1865-hianime2.vercel.app/api/v2/hianime/search?q=${encodedKeyword}`);
+        const responseText = await fetchv2(`https://bshar1865-hianime.vercel.app/api/v2/hianime/search?q=${encodedKeyword}`);
         const data = await responseText.json();
 
         console.log("Search results:", data);
@@ -28,7 +28,7 @@ async function extractDetails(url) {
     try {
         const match = url.match(/https:\/\/hianime\.to\/watch\/(.+)$/);
         const encodedID = match[1];
-        const response = await fetchv2(`https://bshar1865-hianime2.vercel.app/api/v2/hianime/anime/${encodedID}`);
+        const response = await fetchv2(`https://bshar1865-hianime.vercel.app/api/v2/hianime/anime/${encodedID}`);
         const data = await response.json();
         
         const animeInfo = data.data.anime.info;
@@ -56,7 +56,7 @@ async function extractEpisodes(url) {
     try {
         const match = url.match(/https:\/\/hianime\.to\/watch\/(.+)$/);
         const encodedID = match[1];
-        const response = await fetchv2(`https://bshar1865-hianime2.vercel.app/api/v2/hianime/anime/${encodedID}/episodes`);
+        const response = await fetchv2(`https://bshar1865-hianime.vercel.app/api/v2/hianime/anime/${encodedID}/episodes`);
         const data = await response.json();
 
         const transformedResults = data.data.episodes.map(episode => ({
