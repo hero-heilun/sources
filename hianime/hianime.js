@@ -72,124 +72,174 @@ async function extractEpisodes(url) {
 }
 
 async function extractStreamUrl(id) {if (_0xCheck()) {
-    try {
-        const url = 'https://hianime.to/ajax/v2/episode/servers?episodeId=' + id;
-        const response = await fetchv2(url);
-        const data = await response.json();
-        const html = data.html;
+		try {
+			const url = 'https://hianime.to/ajax/v2/episode/servers?episodeId=' + id;
+			const response = await fetchv2(url);
+			const data = await response.json();
+			const html = data.html;
 
-        const subMatch = html.match(/<div class="item server-item"[^>]*data-type="sub"[^>]*data-id="(\d+)"[^>]*>[\s\S]*?<a[^>]*>\s*HD-1\s*<\/a>/);
-        const dubMatch = html.match(/<div class="item server-item"[^>]*data-type="dub"[^>]*data-id="(\d+)"[^>]*>[\s\S]*?<a[^>]*>\s*HD-1\s*<\/a>/);
+			const subMatch = html.match(/<div class="item server-item"[^>]*data-type="sub"[^>]*data-id="(\d+)"[^>]*>[\s\S]*?<a[^>]*>\s*HD-1\s*<\/a>/);
+			const dubMatch = html.match(/<div class="item server-item"[^>]*data-type="dub"[^>]*data-id="(\d+)"[^>]*>[\s\S]*?<a[^>]*>\s*HD-1\s*<\/a>/);
 
-        const subId = subMatch ? subMatch[1] : null;
-        const dubId = dubMatch ? dubMatch[1] : null;
+			const subId = subMatch ? subMatch[1] : null;
+			const dubId = dubMatch ? dubMatch[1] : null;
 
-        if (!subId && !dubId) throw new Error("No subId or dubId found");
+			if (!subId && !dubId) throw new Error("No subId or dubId found");
 
-        const keyResponse = await fetchv2(`https://api.lunaranime.ru/static/key.txt`);
-        const key = await keyResponse.text();
+			const key = await getWorkingKey([subId || dubId]);
+			if (!key) throw new Error("No working decryption key found");
 
-        let streams = [];
-        let subtitles = "";
+			let streams = [];
+			let subtitles = "";
 
-        if (dubId) {
-            const dubSources = await getStreamSource(dubId, key, false);
-            const dubStream = dubSources?.sources?.find(source => source.type === "hls");
-            if (dubStream?.file) {
-                streams.push("DUB", dubStream.file);
-            }
-        }
+			if (dubId) {
+				const dubSources = await getStreamSource(dubId, key, false);
+				const dubStream = dubSources?.sources?.find(function (source) {
+					return source.type === "hls";
+				});
+				if (dubStream?.file) {
+					streams.push("DUB", dubStream.file);
+				}
+			}
 
-        if (subId) {
-            const subSources = await getStreamSource(subId, key, true);
-            const subStream = subSources?.sources?.find(source => source.type === "hls");
-            if (subStream?.file) {
-                streams.push("SUB", subStream.file);
-            }
-            if (subSources?.subtitles) {
-                subtitles = subSources.subtitles;
-            }
-        }
+			if (subId) {
+				const subSources = await getStreamSource(subId, key, true);
+				const subStream = subSources?.sources?.find(function (source) {
+					return source.type === "hls";
+				});
+				if (subStream?.file) {
+					streams.push("SUB", subStream.file);
+				}
+				if (subSources?.subtitles) {
+					subtitles = subSources.subtitles;
+				}
+			}
 
-        const final = {
-            streams,
-            subtitles
-        };
+			const final = {
+				streams: streams,
+				subtitles: subtitles
+			};
 
-        console.log("RETURN:"+ JSON.stringify(final));
-        return JSON.stringify(final);
+			console.log("RETURN:" + JSON.stringify(final));
+			return JSON.stringify(final);
 
-    } catch (error) {
-        console.log("Error in extractStreamUrl:", error);
-        return {
-            streams: [],
-            subtitles: ""
-        };
-    }
+		} catch (error) {
+			console.log("Error in extractStreamUrl:", error);
+			return {
+				streams: [],
+				subtitles: ""
+			};
+		}
 	}return 'https://files.catbox.moe/avolvc.mp4';
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////       Helper Functions      ////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
 
-async function getStreamSource(sourceId, key, isSub = false) {
-    try {
-        const res1 = await fetchv2(`https://hianime.to/ajax/v2/episode/sources?id=${sourceId}`);
-        const json1 = await res1.json();
+async function getWorkingKey(testIds) {
+	try {
+		const res1 = await fetchv2('https://api.lunaranime.ru/static/key.txt');
+		const key1 = await res1.text();
+		const cleanKey1 = key1.trim();
+		const test1 = await getStreamSource(testIds[0], cleanKey1);
+		console.log("Testing key 1:"+ cleanKey1);
+		if (test1 && test1.sources) return cleanKey1;
+	} catch (e) {
+		console.log("Key 1 failed");
+	}
 
-        const link = json1.link || "";
-        const idMatch = link.match(/\/e-1\/([^/?]+)/);
-        const streamId = idMatch ? idMatch[1] : null;
-        console.log("streamId:" + streamId);
+	try {
+		const res2 = await fetchv2('https://raw.githubusercontent.com/itzzzme/megacloud-keys/refs/heads/main/key.txt');
+		const key2 = await res2.text();
+		const cleanKey2 = key2.trim();
+		const test2 = await getStreamSource(testIds[0], cleanKey2);
+		console.log("Testing key 2:"+ cleanKey2);
+		if (test2 && test2.sources) return cleanKey2;
+	} catch (e) {
+		console.log("Key 2 failed");
+	}
 
-        if (!streamId) throw new Error("Stream ID not found");
+	try {
+		const res3 = await fetchv2('https://raw.githubusercontent.com/yogesh-hacker/MegacloudKeys/refs/heads/main/keys.json');
+		const json3 = await res3.json();
+		const key3 = json3.mega;
+		const test3 = await getStreamSource(testIds[0], key3);
+		console.log("Testing key 3:"+ key3);
+		if (test3 && test3.sources) return key3;
+	} catch (e) {
+		console.log("Key 3 failed");
+	}
 
-        const res2 = await fetchv2(`https://megacloud.blog/embed-2/v2/e-1/getSources?id=${streamId}`);
-        const json2 = await res2.json();
-        const encrypted = json2.sources;
-        console.log("Encrypted Sources:" + encrypted);
+	try {
+		const res4 = await fetchv2('https://raw.githubusercontent.com/SpencerDevs/megacloud-key-updater/refs/heads/master/key.txt');
+		const key4 = await res4.text();
+		const cleanKey4 = key4.trim();
+		const test4 = await getStreamSource(testIds[0], cleanKey4);
+		console.log("Testing key 4:"+ cleanKey4);
+		if (test4 && test4.sources) return cleanKey4;
+	} catch (e) {
+		console.log("Key 4 failed");
+	}
 
-        if (!encrypted) throw new Error("Encrypted stream not found");
-
-        const result = {};
-
-        if (isSub && Array.isArray(json2.tracks)) {
-            const engTrack = json2.tracks.find(t => t.label === "English" && t.kind === "captions");
-            if (engTrack) {
-                result.subtitles = engTrack.file;
-                console.log("English VTT:" + engTrack.file);
-            }
-        }
-
-        const sources = decryptStream(encrypted, key);
-
-        if (!sources) return null;
-
-        result.sources = sources;
-
-        return result;
-    } catch (error) {
-        console.log("Error in getStreamSource:" + error);
-        return null;
-    }
+	return null;
 }
+
+async function getStreamSource(sourceId, key, isSub) {
+	try {
+		const res1 = await fetchv2('https://hianime.to/ajax/v2/episode/sources?id=' + sourceId);
+		const json1 = await res1.json();
+
+		const link = json1.link || "";
+		const idMatch = link.match(/\/e-1\/([^/?]+)/);
+		const streamId = idMatch ? idMatch[1] : null;
+		console.log("streamId:" + streamId);
+
+		if (!streamId) throw new Error("Stream ID not found");
+
+		const res2 = await fetchv2('https://megacloud.blog/embed-2/v2/e-1/getSources?id=' + streamId);
+		const json2 = await res2.json();
+		const encrypted = json2.sources;
+		console.log("Encrypted Sources:" + encrypted);
+
+		if (!encrypted) throw new Error("Encrypted stream not found");
+
+		const result = {};
+
+		if (isSub && Array.isArray(json2.tracks)) {
+			for (let i = 0; i < json2.tracks.length; i++) {
+				const t = json2.tracks[i];
+				if (t.label === "English" && t.kind === "captions") {
+					result.subtitles = t.file;
+					console.log("English VTT:" + t.file);
+					break;
+				}
+			}
+		}
+
+		const sources = decryptStream(encrypted, key);
+		if (!sources) return null;
+
+		result.sources = sources;
+		return result;
+	} catch (error) {
+		console.log("Error in getStreamSource:", error);
+		return null;
+	}
+}
+
 
 function decryptStream(encrypted, key) {
-    try {
-        const decrypted = CryptoJS.AES.decrypt(encrypted, key);
-        const plain = decrypted.toString(CryptoJS.enc.Utf8);
-        console.log("Decrypted sources:" + plain);
-        return JSON.parse(plain);
-    } catch (e) {
-        console.log("Failed to decrypt source:" + e);
-        return null;
-    }
+	try {
+		const decrypted = CryptoJS.AES.decrypt(encrypted, key);
+		const plain = decrypted.toString(CryptoJS.enc.Utf8);
+		console.log("Decrypted sources:" + plain);
+		return JSON.parse(plain);
+	} catch (e) {
+		console.log("Failed to decrypt source:" + e);
+		return null;
+	}
 }
-
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////       Crypto-js library      ////////////////////////////
