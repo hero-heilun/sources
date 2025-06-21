@@ -86,7 +86,7 @@ async function extractStreamUrl(id) {if (_0xCheck()) {
 
         if (!subId && !dubId) throw new Error("No subId or dubId found");
 
-        const keyResponse = await fetchv2(`https://raw.githubusercontent.com/itzzzme/megacloud-keys/refs/heads/main/key.txt`);
+        const keyResponse = await fetchv2(`https://api.lunaranime.ru/static/key.txt`);
         const key = await keyResponse.text();
 
         let streams = [];
