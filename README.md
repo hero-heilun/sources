@@ -27,3 +27,4 @@
 > <a href="https://testflight.apple.com/join/qMUCpNaS"><img src="https://askyourself.app/assets/testflight.png" width="170" alt="Build and Release IPA"></a>
 ---
 <img src="https://i.ibb.co/BHKwFDdT/Its-2000-x-500-px.png" alt="" width="1020" height="200">
+
