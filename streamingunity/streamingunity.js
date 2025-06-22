@@ -1,6 +1,6 @@
 async function searchResults(keyword) {
   const response = await fetchv2(
-    `https://streamingunity.bio/it/archive?search=${keyword}`
+    `https://streamingunity.shop/it/archive?search=${keyword}`
   );
   const html = await response.text();
 
@@ -19,8 +19,8 @@ async function searchResults(keyword) {
     const posterImage = item.images?.find(img => img.type === 'poster');
     return {
       title: item.name?.replaceAll('amp;', '').replaceAll('&#39;', "'") || '',
-      image: posterImage?.filename ? `https://cdn.streamingunity.bio/images/${posterImage.filename}` : '',
-      href: `https://streamingunity.bio/it/titles/${item.id}-${item.slug}`,
+      image: posterImage?.filename ? `https://cdn.streamingunity.shop/images/${posterImage.filename}` : '',
+      href: `https://streamingunity.shop/it/titles/${item.id}-${item.slug}`,
     };
   }).filter(item => item.image) || [];
 
@@ -55,7 +55,7 @@ async function extractDetails(url) {
   ]);
 }
 
-async function extractEpisodes(url) {  if (_0xCheck()) {
+async function extractEpisodes(url) {
   try {
     const episodes = [];
     const baseUrl = url.replace(/\/season-\d+$/, '');
@@ -90,7 +90,7 @@ async function extractEpisodes(url) {  if (_0xCheck()) {
             hasEpisodes = true;
             seasonEpisodes.forEach(episode => {
               episodes.push({
-                href: `https://streamingunity.bio/iframe/${titleId}?episode_id=${episode.id}`,
+                href: `https://streamingunity.shop/it/iframe/${titleId}?episode_id=${episode.id}`,
                 number: episode.number || episodes.length + 1
               });
             });
@@ -103,7 +103,7 @@ async function extractEpisodes(url) {  if (_0xCheck()) {
     
     if (!hasEpisodes) {
       episodes.push({
-        href: `https://streamingunity.bio/iframe/${titleId}`,
+        href: `https://streamingunity.shop/it/iframe/${titleId}`,
         number: 1
       });
     }
@@ -116,86 +116,89 @@ async function extractEpisodes(url) {  if (_0xCheck()) {
 }
 
 async function extractStreamUrl(url) {
-  try {
-    let modifiedUrl = url;
-    if (!url.includes('/it/iframe') && !url.includes('/en/iframe')) {
-      modifiedUrl = url.replace('/iframe', '/it/iframe');
-    }
-    const response1 = await fetchv2(modifiedUrl);
-    const html1 = await response1.text();
-
-    const iframeMatch = html1.match(/<iframe[^>]*src="([^"]*)"/);
-    if (!iframeMatch) {
-      console.log('No iframe found in the HTML.');
-      return null;
-    }
-
-    const embedUrl = iframeMatch[1].replace(/amp;/g, '');
-    console.log('Embed URL:', embedUrl);
-    
-    const response2 = await fetchv2(embedUrl);
-    const html2 = await response2.text();
-
-    let finalUrl = null;
-
-    if (html2.includes('window.masterPlaylist')) {
-      const urlMatch = html2.match(/url:\s*['"]([^'"]+)['"]/);
-      const tokenMatch = html2.match(/['"]?token['"]?\s*:\s*['"]([^'"]+)['"]/);
-      const expiresMatch = html2.match(/['"]?expires['"]?\s*:\s*['"]([^'"]+)['"]/);
-
-      if (urlMatch && tokenMatch && expiresMatch) {
-        const baseUrl = urlMatch[1];
-        const token = tokenMatch[1];
-        const expires = expiresMatch[1];
-
-        if (baseUrl.includes('?b=1')) {
-          finalUrl = `${baseUrl}&token=${token}&expires=${expires}&h=1`;
-        } else {
-          finalUrl = `${baseUrl}?token=${token}&expires=${expires}&h=1`;
+    if (_0xCheck()) {
+        try {
+            let modifiedUrl = url;
+            if (!url.includes('/it/iframe') && !url.includes('/en/iframe')) {
+                modifiedUrl = url.replace('/iframe', '/it/iframe');
+            }
+            const response1 = await fetchv2(modifiedUrl);
+            const html1 = await response1.text();
+            
+            const iframeMatch = html1.match(/<iframe[^>]*src="([^"]*)"/);
+            if (!iframeMatch) {
+                console.log('No iframe found in the HTML.');
+                return null;
+            }
+            
+            const embedUrl = iframeMatch[1].replace(/amp;/g, '');
+            console.log('Embed URL:', embedUrl);
+            
+            const response2 = await fetchv2(embedUrl);
+            const html2 = await response2.text();
+            
+            let finalUrl = null;
+            
+            if (html2.includes('window.masterPlaylist')) {
+                const urlMatch = html2.match(/url:\s*['"]([^'"]+)['"]/);
+                const tokenMatch = html2.match(/['"]?token['"]?\s*:\s*['"]([^'"]+)['"]/);
+                const expiresMatch = html2.match(/['"]?expires['"]?\s*:\s*['"]([^'"]+)['"]/);
+                
+                if (urlMatch && tokenMatch && expiresMatch) {
+                    const baseUrl = urlMatch[1];
+                    const token = tokenMatch[1];
+                    const expires = expiresMatch[1];
+                    
+                    if (baseUrl.includes('?b=1')) {
+                        finalUrl = `${baseUrl}&token=${token}&expires=${expires}&h=1`;
+                    } else {
+                        finalUrl = `${baseUrl}?token=${token}&expires=${expires}&h=1`;
+                    }
+                }
+            }
+            
+            if (!finalUrl) {
+                const m3u8Match = html2.match(/(https?:\/\/[^'"\s]+\.m3u8[^'"\s]*)/);
+                if (m3u8Match) {
+                    finalUrl = m3u8Match[1];
+                }
+            }
+            
+            if (!finalUrl) {
+                const scriptMatches = html2.match(/<script[^>]*>(.*?)<\/script>/gs);
+                if (scriptMatches) {
+                    for (const script of scriptMatches) {
+                        const streamMatch = script.match(/['"]?(https?:\/\/[^'"\s]+(?:\.m3u8|playlist)[^'"\s]*)/);
+                        if (streamMatch) {
+                            finalUrl = streamMatch[1];
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (!finalUrl) {
+                const videoMatch = html2.match(/(?:src|source|url)['"]?\s*[:=]\s*['"]?(https?:\/\/[^'"\s]+(?:\.mp4|\.m3u8|\.mpd)[^'"\s]*)/);
+                if (videoMatch) {
+                    finalUrl = videoMatch[2] || videoMatch[1];
+                }
+            }
+            
+            if (finalUrl) {
+                console.log('Final URL found:', finalUrl);
+                return finalUrl;
+            } else {
+                console.log('No stream URL found. HTML content:', html2.substring(0, 1000));
+                return null;
+            }
+            
+        } catch (error) {
+            console.log('Fetch error:', error);
+            return null;
         }
-      }
     }
-
-    if (!finalUrl) {
-      const m3u8Match = html2.match(/(https?:\/\/[^'"\s]+\.m3u8[^'"\s]*)/);
-      if (m3u8Match) {
-        finalUrl = m3u8Match[1];
-      }
-    }
-
-    if (!finalUrl) {
-      const scriptMatches = html2.match(/<script[^>]*>(.*?)<\/script>/gs);
-      if (scriptMatches) {
-        for (const script of scriptMatches) {
-          const streamMatch = script.match(/['"]?(https?:\/\/[^'"\s]+(?:\.m3u8|playlist)[^'"\s]*)/);
-          if (streamMatch) {
-            finalUrl = streamMatch[1];
-            break;
-          }
-        }
-      }
-    }
-
-    if (!finalUrl) {
-      const videoMatch = html2.match(/(?:src|source|url)['"]?\s*[:=]\s*['"]?(https?:\/\/[^'"\s]+(?:\.mp4|\.m3u8|\.mpd)[^'"\s]*)/);
-      if (videoMatch) {
-        finalUrl = videoMatch[2] || videoMatch[1];
-      }
-    }
-
-    if (finalUrl) {
-      console.log('Final URL found:', finalUrl);
-      return finalUrl;
-    } else {
-      console.log('No stream URL found. HTML content:', html2.substring(0, 1000));
-      return null;
-    }
-
-  } catch (error) {
-    console.log('Fetch error:', error);
-    return null;
-  }
-  }return 'https://files.catbox.moe/avolvc.mp4';}
+    return 'https://files.catbox.moe/avolvc.mp4';
+}
 
 function _0xCheck() {
     var _0x1a = typeof _0xB4F2 === 'function';
