@@ -140,50 +140,58 @@ async function extractStreamUrl(id) {if (_0xCheck()) {
 async function getWorkingKey(testIds) {
 	try {
 		const res1 = await fetchv2('https://api.lunaranime.ru/static/key.txt');
-		const key1 = await res1.text();
-		const cleanKey1 = key1.trim();
-		const test1 = await getStreamSource(testIds[0], cleanKey1);
-		console.log("Testing key 1:"+ cleanKey1);
-		if (test1 && test1.sources) return cleanKey1;
+		const key1 = (await res1.text()).trim();
+		const test1 = await getStreamSource(testIds[0], key1);
+		console.log("Testing key 1:" + key1);
+		if (test1 && test1.sources) return key1;
 	} catch (e) {
 		console.log("Key 1 failed");
 	}
 
 	try {
 		const res2 = await fetchv2('https://raw.githubusercontent.com/itzzzme/megacloud-keys/refs/heads/main/key.txt');
-		const key2 = await res2.text();
-		const cleanKey2 = key2.trim();
-		const test2 = await getStreamSource(testIds[0], cleanKey2);
-		console.log("Testing key 2:"+ cleanKey2);
-		if (test2 && test2.sources) return cleanKey2;
+		const key2 = (await res2.text()).trim();
+		const test2 = await getStreamSource(testIds[0], key2);
+		console.log("Testing key 2:" + key2);
+		if (test2 && test2.sources) return key2;
 	} catch (e) {
 		console.log("Key 2 failed");
 	}
 
 	try {
-		const res3 = await fetchv2('https://raw.githubusercontent.com/yogesh-hacker/MegacloudKeys/refs/heads/main/keys.json');
+		const res3 = await fetchv2('https://justarion.github.io/keys/e1-player/src/data/keys.json');
 		const json3 = await res3.json();
-		const key3 = json3.mega;
+		const key3 = json3.megacloud.anime.key;
 		const test3 = await getStreamSource(testIds[0], key3);
-		console.log("Testing key 3:"+ key3);
+		console.log("Testing key 3:" + key3);
 		if (test3 && test3.sources) return key3;
 	} catch (e) {
 		console.log("Key 3 failed");
 	}
 
 	try {
-		const res4 = await fetchv2('https://raw.githubusercontent.com/SpencerDevs/megacloud-key-updater/refs/heads/master/key.txt');
-		const key4 = await res4.text();
-		const cleanKey4 = key4.trim();
-		const test4 = await getStreamSource(testIds[0], cleanKey4);
-		console.log("Testing key 4:"+ cleanKey4);
-		if (test4 && test4.sources) return cleanKey4;
+		const res4 = await fetchv2('https://raw.githubusercontent.com/yogesh-hacker/MegacloudKeys/refs/heads/main/keys.json');
+		const key4 = (await res4.json()).mega;
+		const test4 = await getStreamSource(testIds[0], key4);
+		console.log("Testing key 4:" + key4);
+		if (test4 && test4.sources) return key4;
 	} catch (e) {
 		console.log("Key 4 failed");
 	}
 
+	try {
+		const res5 = await fetchv2('https://raw.githubusercontent.com/SpencerDevs/megacloud-key-updater/refs/heads/master/key.txt');
+		const key5 = (await res5.text()).trim();
+		const test5 = await getStreamSource(testIds[0], key5);
+		console.log("Testing key 5:" + key5);
+		if (test5 && test5.sources) return key5;
+	} catch (e) {
+		console.log("Key 5 failed");
+	}
+
 	return null;
 }
+
 
 async function getStreamSource(sourceId, key, isSub) {
 	try {
