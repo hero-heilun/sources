@@ -7,8 +7,9 @@ async function searchResults(keyword) {
     const encodedKeyword = encodeURIComponent(keyword);
     const searchApiUrl = `https://aniworld.to/ajax/seriesSearch?keyword=${encodedKeyword}`;
     const responseText = await fetch(searchApiUrl);
-
+    // console.log("Search API Response: " + await responseText.text());
     const data = await JSON.parse(responseText);
+    console.log("Search API Data: ", data);
 
     const transformedResults = data.map((anime) => ({
       title: anime.name,
@@ -26,7 +27,8 @@ async function searchResults(keyword) {
 async function extractDetails(url) {
   try {
     const fetchUrl = `${url}`;
-    const text = await fetch(fetchUrl);
+    const response = await fetch(fetchUrl);
+    const text = response.text ? await response.text() : response;
 
     const descriptionRegex =
       /<p\s+class="seri_des"\s+itemprop="accessibilitySummary"\s+data-description-type="review"\s+data-full-description="([^"]*)".*?>(.*?)<\/p>/s;
@@ -67,10 +69,12 @@ async function extractEpisodes(url) {
   try {
     const baseUrl = "https://aniworld.to";
     const fetchUrl = `${url}`;
-    const html = await fetch(fetchUrl);
+    const response = await fetch(fetchUrl);
+    const html = response.text ? await response.text() : response;
 
     const finishedList = [];
     const seasonLinks = getSeasonLinks(html);
+    console.log("Found season links:", seasonLinks);
 
     for (const seasonLink of seasonLinks) {
       const seasonEpisodes = await fetchSeasonEpisodes(
@@ -95,12 +99,13 @@ async function extractStreamUrl(url) {
   try {
     const baseUrl = "https://aniworld.to";
     const fetchUrl = `${url}`;
-    const text = await fetch(fetchUrl);
+    const response = await fetch(fetchUrl);
+    const text = response.text ? await response.text() : response;
 
     const finishedList = [];
     const languageList = getAvailableLanguages(text);
     const videoLinks = getVideoLinks(text);
-if (!_0xCheck()) return 'https://files.catbox.moe/avolvc.mp4';
+    if (!_0xCheck()) return 'https://files.catbox.moe/avolvc.mp4';
 
     for (const videoLink of videoLinks) {
       const language = languageList.find(
@@ -241,7 +246,8 @@ async function fetchSeasonEpisodes(url) {
   try {
     const baseUrl = "https://aniworld.to";
     const fetchUrl = `${url}`;
-    const text = await fetch(fetchUrl);
+    const response = await fetch(fetchUrl);
+    const text = response.text ? await response.text() : response;
 
     // Updated regex to allow empty <strong> content
     const regex =

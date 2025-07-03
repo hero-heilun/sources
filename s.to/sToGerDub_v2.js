@@ -27,7 +27,8 @@ async function searchResults(keyword) {
 async function extractDetails(url) {
     try {
         const fetchUrl = `${url}`;
-        const text = await fetch(fetchUrl);
+        const response = await fetch(fetchUrl);
+        const text = response.text ? await response.text() : response;
 
         const descriptionRegex = /<p\s+class="seri_des"\s+itemprop="accessibilitySummary"\s+data-description-type="review"\s+data-full-description="([^"]*)".*?>(.*?)<\/p>/s;
         const aliasesRegex = /<h1\b[^>]*\bdata-alternativetitles="([^"]+)"[^>]*>/i;
@@ -63,7 +64,8 @@ async function extractEpisodes(url) {
     try {
         const baseUrl = 'https://s.to';
         const fetchUrl = `${url}`;
-        const html = await fetch(fetchUrl);
+        const response = await fetch(fetchUrl);
+        const html = response.text ? await response.text() : response;
 
         const finishedList = [];
         const seasonLinks = getSeasonLinks(html);
@@ -92,8 +94,8 @@ async function extractStreamUrl(url) {
   try {
     const baseUrl = 'https://s.to';
     const fetchUrl = `${url}`;
-    let text = await fetch(fetchUrl);
-    text = text.text ? await text.text() : text;
+    const response = await fetch(fetchUrl);
+    const text = response.text ? await response.text() : response;
 
     const finishedList = [];
     const languageList = getAvailableLanguages(text);
