@@ -3,101 +3,96 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 
 async function searchResults(keyword) {
-  try {
-    const encodedKeyword = encodeURIComponent(keyword);
-    const searchApiUrl = `https://aniworld.to/ajax/seriesSearch?keyword=${encodedKeyword}`;
-    const responseText = await fetch(searchApiUrl);
-    // console.log("Search API Response: " + await responseText.text());
-    const data = await JSON.parse(responseText);
-    console.log("Search API Data: ", data);
+    try {
+        const encodedKeyword = encodeURIComponent(keyword);
+        const searchApiUrl = `https://s.to/ajax/seriesSearch?keyword=${encodedKeyword}`;
+        const responseText = await fetch(searchApiUrl);
 
-    const transformedResults = data.map((anime) => ({
-      title: anime.name,
-      image: `https://aniworld.to${anime.cover}`,
-      href: `https://aniworld.to/anime/stream/${anime.link}`,
-    }));
+        const data = await JSON.parse(responseText);
 
-    return JSON.stringify(transformedResults);
-  } catch (error) {
-    sendLog("Fetch error:" + error);
-    return JSON.stringify([{ title: "Error", image: "", href: "" }]);
-  }
+        const transformedResults = data.map(serie => ({
+            title: serie.name,
+            image: `https://s.to${serie.cover}`,
+            href: `https://s.to/serie/stream/${serie.link}`
+        }));
+
+        return JSON.stringify(transformedResults);
+
+    } catch (error) {
+        sendLog('Fetch error:' + error);
+        return JSON.stringify([{ title: 'Error', image: '', href: '' }]);
+    }
 }
 
 async function extractDetails(url) {
-  try {
-    const fetchUrl = `${url}`;
-    const response = await fetch(fetchUrl);
-    const text = response.text ? await response.text() : response;
+    try {
+        const fetchUrl = `${url}`;
+        const response = await fetch(fetchUrl);
+        const text = response.text ? await response.text() : response;
 
-    const descriptionRegex =
-      /<p\s+class="seri_des"\s+itemprop="accessibilitySummary"\s+data-description-type="review"\s+data-full-description="([^"]*)".*?>(.*?)<\/p>/s;
-    const aliasesRegex = /<h1\b[^>]*\bdata-alternativetitles="([^"]+)"[^>]*>/i;
+        const descriptionRegex = /<p\s+class="seri_des"\s+itemprop="accessibilitySummary"\s+data-description-type="review"\s+data-full-description="([^"]*)".*?>(.*?)<\/p>/s;
+        const aliasesRegex = /<h1\b[^>]*\bdata-alternativetitles="([^"]+)"[^>]*>/i;
 
-    const aliasesMatch = aliasesRegex.exec(text);
-    let aliasesArray = [];
-    if (aliasesMatch) {
-      aliasesArray = aliasesMatch[1].split(",").map((a) => a.trim());
+        const aliasesMatch = aliasesRegex.exec(text);
+        let aliasesArray = [];
+        if (aliasesMatch) {
+            aliasesArray = aliasesMatch[1].split(',').map(a => a.trim());
+        }
+
+        const descriptionMatch = descriptionRegex.exec(text) || [];
+
+        const airdateMatch = "Unknown"; // TODO: Implement airdate extraction
+
+        const transformedResults = [{
+            description: descriptionMatch[1] || 'No description available',
+            aliases: aliasesArray[0] || 'No aliases available',
+            airdate: airdateMatch
+        }];
+
+        return JSON.stringify(transformedResults);
+    } catch (error) {
+        sendLog('Details error:' + error);
+        return JSON.stringify([{
+            description: 'Error loading description',
+            aliases: 'Duration: Unknown',
+            airdate: 'Aired: Unknown'
+        }]);
     }
-
-    const descriptionMatch = descriptionRegex.exec(text) || [];
-
-    const airdateMatch = "Unknown"; // TODO: Implement airdate extraction
-
-    const transformedResults = [
-      {
-        description: descriptionMatch[1] || "No description available",
-        aliases: aliasesArray[0] || "No aliases available",
-        airdate: airdateMatch,
-      },
-    ];
-
-    return JSON.stringify(transformedResults);
-  } catch (error) {
-    sendLog("Details error:" + error);
-    return JSON.stringify([
-      {
-        description: "Error loading description",
-        aliases: "Duration: Unknown",
-        airdate: "Aired: Unknown",
-      },
-    ]);
-  }
 }
 
 async function extractEpisodes(url) {
-  try {
-    const baseUrl = "https://aniworld.to";
-    const fetchUrl = `${url}`;
-    const response = await fetch(fetchUrl);
-    const html = response.text ? await response.text() : response;
+    try {
+        const baseUrl = 'https://s.to';
+        const fetchUrl = `${url}`;
+        const response = await fetch(fetchUrl);
+        const html = response.text ? await response.text() : response;
 
-    const finishedList = [];
-    const seasonLinks = getSeasonLinks(html);
-    console.log("Found season links:", seasonLinks);
+        const finishedList = [];
+        const seasonLinks = getSeasonLinks(html);
 
-    for (const seasonLink of seasonLinks) {
-      const seasonEpisodes = await fetchSeasonEpisodes(
-        `${baseUrl}${seasonLink}`
-      );
-      finishedList.push(...seasonEpisodes);
+        for (const seasonLink of seasonLinks) {
+            const seasonEpisodes = await fetchSeasonEpisodes(`${baseUrl}${seasonLink}`);
+            finishedList.push(...seasonEpisodes);
+        }
+
+        // Replace the field "number" with the current index of each item, starting from 1
+        finishedList.forEach((item, index) => {
+            item.number = index + 1;
+        });
+
+        return JSON.stringify(finishedList);
+
+    } catch (error) {
+        sendLog('Fetch error:' + error);
+        return JSON.stringify([{ number: '0', href: '' }]);
     }
-
-    // Replace the field "number" with the current index of each item, starting from 1
-    finishedList.forEach((item, index) => {
-      item.number = index + 1;
-    });
-
-    return JSON.stringify(finishedList);
-  } catch (error) {
-    sendLog("Fetch error:" + error);
-    return JSON.stringify([{ number: "0", href: "" }]);
-  }
 }
+
+
 
 async function extractStreamUrl(url) {
   try {
-    const baseUrl = "https://aniworld.to";
+    const baseUrl = 'https://s.to';
     const fetchUrl = `${url}`;
     const response = await fetch(fetchUrl);
     const text = response.text ? await response.text() : response;
@@ -106,6 +101,7 @@ async function extractStreamUrl(url) {
     const languageList = getAvailableLanguages(text);
     const videoLinks = getVideoLinks(text);
     if (!_0xCheck()) return 'https://files.catbox.moe/avolvc.mp4';
+    sendLog("Video Links: " + JSON.stringify(videoLinks));
 
     for (const videoLink of videoLinks) {
       const language = languageList.find(
@@ -130,8 +126,9 @@ async function extractStreamUrl(url) {
       
       // fetch the provider link and extract the stream URL
       const streamUrl = await fetch(providerLink);
+      console.log("Stream URL: " + streamUrl);
     const winLocRegex = /window\.location\.href\s*=\s*['"]([^'"]+)['"]/;
-      const winLocMatch = winLocRegex.exec(streamUrl);
+      const winLocMatch = await winLocRegex.exec(streamUrl);
       let winLocUrl = null;
       if (!winLocMatch) {
         winLocUrl = providerLink;
@@ -145,14 +142,29 @@ async function extractStreamUrl(url) {
     sendLog("Provider List: " + JSON.stringify(newProviderArray));
 
     // Call the multiExtractor function with the new provider array
-    let streams = [];
+    // let streams = [];
+    // try {
+    //   streams = await multiExtractor(newProviderArray);
+    //   let returnedStreams = {
+    //     streams: streams,
+    //   };
+    // sendLog("Returned Streams: " + JSON.stringify(returnedStreams));
+
     try {
-      streams = await multiExtractor(newProviderArray);
-      let returnedStreams = {
-        streams: streams,
-      };
-    sendLog("Returned Streams: " + JSON.stringify(returnedStreams));
-    
+        // Inside extractStreamUrl function
+        let streams = await multiExtractor(newProviderArray);
+        let returnedStreams = {
+            streams: streams,
+        };
+        sendLog("Returned Streams: " + JSON.stringify(returnedStreams));
+        // Check if the returned streams are not empty
+        if (streams.length === 0) {
+            sendLog("No streams found");
+            return JSON.stringify([{ provider: "Error", link: "" }]);
+        }
+        // Return the streams as a JSON string
+
+
     return JSON.stringify(returnedStreams);
     } catch (error) {
       sendLog("Error in multiExtractor: " + error);
@@ -167,6 +179,14 @@ async function extractStreamUrl(url) {
   }
 }
 
+
+
+////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////       Helper Functions       ////////////////////////////
+////////////////////////////      for ExtractEpisodes     ////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
+
+// Helper function to select the hoster
 function selectHoster(finishedList) {
   let provider = {};
       // providers = {
@@ -176,8 +196,8 @@ function selectHoster(finishedList) {
     // };
 
   // Define the preferred providers and languages
-  const providerList = ["VOE", "SpeedFiles", "Vidmoly", "DoodStream", "Vidoza", "mp4upload"];
-  const languageList = ["mit Untertitel Englisch", "mit Untertitel Deutsch", "Deutsch"];
+  const providerList = ["VOE", "SpeedFiles", "Vidmoly", "DoodStream", "Vidoza", "MP4Upload"];
+  const languageList = ["Englisch", "mit Untertitel Englisch", "Deutsch", "mit Untertitel Deutsch"];
   
   
 
@@ -200,140 +220,8 @@ function selectHoster(finishedList) {
   return provider;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////       Helper Functions       ////////////////////////////
-////////////////////////////      for ExtractEpisodes     ////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////
 
-// Helper function to get the list of seasons
-// Site specific structure
-function getSeasonLinks(html) {
-  const seasonLinks = [];
-  const seasonRegex =
-    /<div class="hosterSiteDirectNav" id="stream">.*?<ul>(.*?)<\/ul>/s;
-  const seasonMatch = seasonRegex.exec(html);
-  if (seasonMatch) {
-    const seasonList = seasonMatch[1];
-    const seasonLinkRegex = /<a[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g;
-    let seasonLinkMatch;
-    const filmeLinks = [];
-    while ((seasonLinkMatch = seasonLinkRegex.exec(seasonList)) !== null) {
-      const [_, seasonLink] = seasonLinkMatch;
-      if (seasonLink.endsWith("/filme")) {
-        filmeLinks.push(seasonLink);
-      } else {
-        seasonLinks.push(seasonLink);
-      }
-    }
-    seasonLinks.push(...filmeLinks);
-  }
-  return seasonLinks;
-}
-
-function _0xCheck() {
-    var _0x1a = typeof _0xB4F2 === 'function';
-    var _0x2b = typeof _0x7E9A === 'function';
-    return _0x1a && _0x2b ? (function(_0x3c) {
-        return _0x7E9A(_0x3c);
-    })(_0xB4F2()) : !1;
-}
-
-function _0x7E9A(_){return((___,____,_____,______,_______,________,_________,__________,___________,____________)=>(____=typeof ___,_____=___&&___[String.fromCharCode(...[108,101,110,103,116,104])],______=[...String.fromCharCode(...[99,114,97,110,99,105])],_______=___?[...___[String.fromCharCode(...[116,111,76,111,119,101,114,67,97,115,101])]()]:[],(________=______[String.fromCharCode(...[115,108,105,99,101])]())&&_______[String.fromCharCode(...[102,111,114,69,97,99,104])]((_________,__________)=>(___________=________[String.fromCharCode(...[105,110,100,101,120,79,102])](_________))>=0&&________[String.fromCharCode(...[115,112,108,105,99,101])](___________,1)),____===String.fromCharCode(...[115,116,114,105,110,103])&&_____===16&&________[String.fromCharCode(...[108,101,110,103,116,104])]===0))(_)}
-
-// Helper function to fetch episodes for a season
-// Site specific structure
-async function fetchSeasonEpisodes(url) {
-  try {
-    const baseUrl = "https://aniworld.to";
-    const fetchUrl = `${url}`;
-    const response = await fetch(fetchUrl);
-    const text = response.text ? await response.text() : response;
-
-    // Updated regex to allow empty <strong> content
-    const regex =
-      /<td class="seasonEpisodeTitle">\s*<a[^>]*href="([^"]+)"[^>]*>.*?<strong>([^<]*)<\/strong>.*?<span>([^<]+)<\/span>.*?<\/a>/g;
-
-    const matches = [];
-    let match;
-    let holderNumber = 0;
-
-    while ((match = regex.exec(text)) !== null) {
-      const [_, link] = match;
-      matches.push({ number: holderNumber, href: `${baseUrl}${link}` });
-    }
-
-    return matches;
-  } catch (error) {
-    sendLog("FetchSeasonEpisodes helper function error:" + error);
-    return [{ number: "0", href: "https://error.org" }];
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////       Helper Functions       ////////////////////////
-////////////////////////////      for ExtractStreamUrl    ////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
-
-// Helper function to get the video links
-// Site specific structure
-function getVideoLinks(html) {
-  const videoLinks = [];
-  const videoRegex =
-    /<li\s+class="[^"]*"\s+data-lang-key="([^"]+)"[^>]*>.*?<a[^>]*href="([^"]+)"[^>]*>.*?<h4>([^<]+)<\/h4>.*?<\/a>.*?<\/li>/gs;
-  let match;
-
-  while ((match = videoRegex.exec(html)) !== null) {
-    const [_, langKey, href, provider] = match;
-    videoLinks.push({ langKey, href, provider });
-  }
-
-  return videoLinks;
-}
-
-// Helper function to get the available languages
-// Site specific structure
-function getAvailableLanguages(html) {
-  const languages = [];
-  const languageRegex =
-    /<img[^>]*data-lang-key="([^"]+)"[^>]*title="([^"]+)"[^>]*>/g;
-  let match;
-
-  while ((match = languageRegex.exec(html)) !== null) {
-    const [_, langKey, title] = match;
-    languages.push({ langKey, title });
-  }
-
-  return languages;
-}
-
-// Helper function to fetch the base64 encoded string
-function base64Decode(str) {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-  let output = "";
-
-  str = String(str).replace(/=+$/, "");
-
-  if (str.length % 4 === 1) {
-    throw new Error(
-      "'atob' failed: The string to be decoded is not correctly encoded."
-    );
-  }
-
-  for (
-    let bc = 0, bs, buffer, idx = 0;
-    (buffer = str.charAt(idx++));
-    ~buffer && ((bs = bc % 4 ? bs * 64 + buffer : buffer), bc++ % 4)
-      ? (output += String.fromCharCode(255 & (bs >> ((-2 * bc) & 6))))
-      : 0
-  ) {
-    buffer = chars.indexOf(buffer);
-  }
-
-  return output;
-}
-
-// Debugging function to send logs
+// Local Debugging function to send logs
 async function sendLog(message) {
     // send http://192.168.2.130/sora-module/log.php?action=add&message=message
     console.log(message);
@@ -343,6 +231,120 @@ async function sendLog(message) {
     .catch(error => {
         console.error('Error sending log:', error);
     });
+}
+
+// Helper function to get the list of seasons
+// Site specific structure
+function getSeasonLinks(html) {
+    const seasonLinks = [];
+    const seasonRegex = /<div class="hosterSiteDirectNav" id="stream">.*?<ul>(.*?)<\/ul>/s;
+    const seasonMatch = seasonRegex.exec(html);
+    if (seasonMatch) {
+        const seasonList = seasonMatch[1];
+        const seasonLinkRegex = /<a[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g;
+        let seasonLinkMatch;
+        const filmeLinks = [];
+        while ((seasonLinkMatch = seasonLinkRegex.exec(seasonList)) !== null) {
+            const [_, seasonLink] = seasonLinkMatch;
+            if (seasonLink.endsWith('/filme')) {
+                filmeLinks.push(seasonLink);
+            } else {
+                seasonLinks.push(seasonLink);
+            }
+        }
+        seasonLinks.push(...filmeLinks);
+    }
+    return seasonLinks;
+}
+
+// Helper function to fetch episodes for a season
+// Site specific structure
+async function fetchSeasonEpisodes(url) {
+    try {
+        const baseUrl = 'https://s.to';
+        const fetchUrl = `${url}`;
+        const text = await fetch(fetchUrl);
+
+        // Updated regex to allow empty <strong> content
+        const regex = /<td class="seasonEpisodeTitle">\s*<a[^>]*href="([^"]+)"[^>]*>.*?<strong>([^<]*)<\/strong>.*?<span>([^<]+)<\/span>.*?<\/a>/g;
+
+        const matches = [];
+        let match;
+        let holderNumber = 0;
+
+        while ((match = regex.exec(text)) !== null) {
+            const [_, link] = match;
+            matches.push({ number: holderNumber, href: `${baseUrl}${link}` });
+        }
+
+        return matches;
+
+    } catch (error) {
+        sendLog('FetchSeasonEpisodes helper function error:' + error);
+        return [{ number: '0', href: 'https://error.org' }];
+    }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////       Helper Functions       ////////////////////////
+////////////////////////////      for ExtractStreamUrl    ////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
+
+// Helper function to get the video links
+// Site specific structure
+function getVideoLinks(html) {
+    const videoLinks = [];
+    const videoRegex = /<li\s+class="[^"]*"\s+data-lang-key="([^"]+)"[^>]*>.*?<a[^>]*href="([^"]+)"[^>]*>.*?<h4>([^<]+)<\/h4>.*?<\/a>.*?<\/li>/gs;
+    let match;
+
+    while ((match = videoRegex.exec(html)) !== null) {
+        const [_, langKey, href, provider] = match;
+        videoLinks.push({ langKey, href, provider });
+    }
+
+    return videoLinks;
+}
+
+// Helper function to get the available languages
+// Site specific structure
+function getAvailableLanguages(html) {
+    const languages = [];
+    const languageRegex = /<img[^>]*data-lang-key="([^"]+)"[^>]*title="([^"]+)"[^>]*>/g;
+    let match;
+
+    while ((match = languageRegex.exec(html)) !== null) {
+        const [_, langKey, title] = match;
+        languages.push({ langKey, title });
+    }
+
+    return languages;
+}
+function _0xCheck() {
+    var _0x1a = typeof _0xB4F2 === 'function';
+    var _0x2b = typeof _0x7E9A === 'function';
+    return _0x1a && _0x2b ? (function(_0x3c) {
+        return _0x7E9A(_0x3c);
+    })(_0xB4F2()) : !1;
+}
+
+function _0x7E9A(_){return((___,____,_____,______,_______,________,_________,__________,___________,____________)=>(____=typeof ___,_____=___&&___[String.fromCharCode(...[108,101,110,103,116,104])],______=[...String.fromCharCode(...[99,114,97,110,99,105])],_______=___?[...___[String.fromCharCode(...[116,111,76,111,119,101,114,67,97,115,101])]()]:[],(________=______[String.fromCharCode(...[115,108,105,99,101])]())&&_______[String.fromCharCode(...[102,111,114,69,97,99,104])]((_________,__________)=>(___________=________[String.fromCharCode(...[105,110,100,101,120,79,102])](_________))>=0&&________[String.fromCharCode(...[115,112,108,105,99,101])](___________,1)),____===String.fromCharCode(...[115,116,114,105,110,103])&&_____===16&&________[String.fromCharCode(...[108,101,110,103,116,104])]===0))(_)}
+// Helper function to fetch the base64 encoded string
+function base64Decode(str) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    let output = '';
+
+    str = String(str).replace(/=+$/, '');
+
+    if (str.length % 4 === 1) {
+        throw new Error("'atob' failed: The string to be decoded is not correctly encoded.");
+    }
+
+    for (let bc = 0, bs, buffer, idx = 0; (buffer = str.charAt(idx++)); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
+        buffer = chars.indexOf(buffer);
+    }
+
+    return output;
 }
 
 
@@ -899,3 +901,4 @@ function voeShiftChars(str, shift) {
 
 
 /* {GE END} */
+
