@@ -189,6 +189,26 @@ async function getWorkingKey(testIds) {
 		console.log("Key 5 failed");
 	}
 
+	try {
+		const res6 = await fetchv2('https://raw.githubusercontent.com/poypoy252525/megacloud-keys/refs/heads/main/hianime_key.txt');
+		const key6 = (await res6.text()).trim();
+		const test6 = await getStreamSource(testIds[0], key6);
+		console.log("Testing key 6:" + key6);
+		if (test6 && test6.sources) return key6;
+	} catch (e) {
+		console.log("Key 6 failed");
+	}
+
+	try {
+		const res7 = await fetchv2('https://raw.githubusercontent.com/zuhaz/key-extractor/refs/heads/main/key.txt');
+		const key7 = (await res7.text()).trim();
+		const test7 = await getStreamSource(testIds[0], key7);
+		console.log("Testing key 7:" + key7);
+		if (test7 && test7.sources) return key7;
+	} catch (e) {
+		console.log("Key 7 failed");
+	}
+
 	return null;
 }
 
