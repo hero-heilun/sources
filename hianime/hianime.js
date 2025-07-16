@@ -73,7 +73,7 @@ async function extractEpisodes(url) {
 
 async function extractStreamUrl(id) {if (_0xCheck()) {
 		try {
-			const url = 'https://hianime.to/ajax/v2/episode/servers?episodeId=' + id;
+			const url = 'https://hianime.cx/ajax/v2/episode/servers?episodeId=' + id;
 			const response = await fetchv2(url);
 			const data = await response.json();
 			const html = data.html;
@@ -215,7 +215,7 @@ async function getWorkingKey(testIds) {
 
 async function getStreamSource(sourceId, key, isSub) {
 	try {
-		const res1 = await fetchv2('https://hianime.to/ajax/v2/episode/sources?id=' + sourceId);
+		const res1 = await fetchv2('https://hianime.cx/ajax/v2/episode/sources?id=' + sourceId);
 		const json1 = await res1.json();
 
 		const link = json1.link || "";
