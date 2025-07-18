@@ -1,12 +1,12 @@
 async function searchResults(keyword) {
     const results = [];
     const headers = {
-        'Referer': 'https://gojo.live/',
+        'Referer': 'hhttps://animetsu.to/',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     };
 
     const encodedKeyword = encodeURIComponent(keyword);
-    const response = await fetchv2(`https://backend.gojo.live/api/anime/search?query=${encodedKeyword}&page=1`, headers);
+    const response = await fetchv2(`https://backend.animetsu.to/api/anime/search?query=${encodedKeyword}&page=1`, headers);
     const json = await response.json();
 
     json.results.forEach(anime => {
@@ -35,14 +35,14 @@ async function searchResults(keyword) {
 async function extractDetails(id) {
     const results = [];
     const headers = {
-        'Referer': 'https://gojo.live/',
+        'Referer': 'https://animetsu.to/',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     };
 
-    const response = await fetchv2(`https://backend.gojo.live/api/anime/info/${id}`, headers);
+    const response = await fetchv2(`https://backend.animetsu.to/api/anime/info/${id}`, headers);
     const json = await response.json();
 
-    const description = cleanHtmlSymbols(json.description) || "No description available"; // Handling case where description might be missing
+    const description = cleanHtmlSymbols(json.description) || "No description available"; 
 
     results.push({
         description: description.replace(/<br>/g, ''),
@@ -56,11 +56,11 @@ async function extractDetails(id) {
 async function extractEpisodes(id) {
     const results = [];
     const headers = {
-        'Referer': 'https://gojo.live/',
+        'Referer': 'https://animetsu.to/',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     };
 
-    const response = await fetchv2(`https://backend.gojo.live/api/anime/episodes/${id}`, headers);
+    const response = await fetchv2(`https://backend.animetsu.to/api/anime/episodes/${id}`, headers);
     const json = await response.json();
 
     const providers = ["pahe", "zaza", "strix"]
@@ -105,13 +105,13 @@ async function extractStreamUrl(url) {
     console.error(`ID: ${id}, Providers: ${providers.map(p => p.provider).join(', ')}`);
 
     const headers = {
-        'Referer': 'https://gojo.live/',
+        'Referer': 'https://animetsu.to/',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     };
 
     const fetches = providers.map(({ provider, number, episodeId }) =>
         fetchv2(
-            `https://backend.gojo.live/api/anime/tiddies?provider=${provider}&id=${id}&num=${number}&subType=sub&watchId=${episodeId}&dub_id=null`,
+            `https://backend.animetsu.to/api/anime/tiddies?provider=${provider}&id=${id}&num=${number}&subType=sub&watchId=${episodeId}&dub_id=null`,
             headers
         )
             .then(res => res.json())
@@ -122,8 +122,7 @@ async function extractStreamUrl(url) {
     const allSources = (await Promise.all(fetches)).flat();
 
     const streams = [];
-    for (const { provider, quality, url } of allSources) {
-        const streamUrl = `https://tiddies.animetsu.to/pahe/${url}`;
+    for (const { provider, quality, url: streamUrl } of allSources) {
         streams.push(`${provider} - ${quality}`, streamUrl);
     }
 
@@ -131,8 +130,6 @@ async function extractStreamUrl(url) {
     console.log(JSON.stringify(result));
     return JSON.stringify(result);
 }
-
-
 
 function cleanHtmlSymbols(string) {
     if (!string) return "";
