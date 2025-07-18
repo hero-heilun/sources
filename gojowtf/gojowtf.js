@@ -131,10 +131,6 @@ async function extractStreamUrl(url) {
     return JSON.stringify(result);
 }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> parent of 335f4ce (Update gojowtf.js)
 function cleanHtmlSymbols(string) {
     if (!string) return "";
 
