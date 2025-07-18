@@ -122,7 +122,8 @@ async function extractStreamUrl(url) {
     const allSources = (await Promise.all(fetches)).flat();
 
     const streams = [];
-    for (const { provider, quality, url: streamUrl } of allSources) {
+    for (const { provider, quality, url } of allSources) {
+        const streamUrl = `https://tiddies.animetsu.to/pahe/${url}`;
         streams.push(`${provider} - ${quality}`, streamUrl);
     }
 
@@ -130,6 +131,7 @@ async function extractStreamUrl(url) {
     console.log(JSON.stringify(result));
     return JSON.stringify(result);
 }
+
 
 
 function cleanHtmlSymbols(string) {
