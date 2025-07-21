@@ -87,9 +87,14 @@ async function extractStreamUrl(id) {
                 streamDub = null;
             }
 
-            const streams = [`SUB: ${streamSub}`];
+            const streams = [];
+
             if (streamDub) {
-                streams.push(`DUB: ${streamDub}`);
+                streams.push("DUB", streamDub);
+            }
+
+            if (streamSub) {
+                streams.push("SUB", streamSub);
             }
 
             const final = {
@@ -108,9 +113,9 @@ async function extractStreamUrl(id) {
             });
         }
     }
+
     return 'https://files.catbox.moe/avolvc.mp4';
 }
-
 
 function _0xCheck() {
     var _0x1a = typeof _0xB4F2 === 'function';
