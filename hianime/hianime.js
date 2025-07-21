@@ -76,7 +76,7 @@ async function extractStreamUrl(id) {
             const streamSub = subJson.results.streamingLink.link.file;
             const englishSubtitles = (subJson.results.streamingLink.tracks || []).find(
                 track => track.kind === "captions" && track.label.toLowerCase().includes("english")
-            )?.file || null;
+            )?.file || "";
 
             let streamDub = null;
             try {
@@ -87,29 +87,30 @@ async function extractStreamUrl(id) {
                 streamDub = null;
             }
 
-            const streams = [{ SUB: streamSub }];
+            const streams = [`SUB: ${streamSub}`];
             if (streamDub) {
-                streams[0].DUB = streamDub;
+                streams.push(`DUB: ${streamDub}`);
             }
 
             const final = {
-                streams: streams,
+                streams,
                 subtitles: englishSubtitles
             };
 
-            console.log("RETURN:" + JSON.stringify(final));
+            console.log("RETURN: " + JSON.stringify(final));
             return JSON.stringify(final);
 
         } catch (error) {
             console.log("Error in extractStreamUrl:", error);
-            return {
+            return JSON.stringify({
                 streams: [],
                 subtitles: ""
-            };
+            });
         }
     }
     return 'https://files.catbox.moe/avolvc.mp4';
 }
+
 
 function _0xCheck() {
     var _0x1a = typeof _0xB4F2 === 'function';
