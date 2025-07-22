@@ -80,29 +80,33 @@ async function extractChapters(url) {
         const response = await soraFetch(url);
         const htmlText = await response.text();
 
-        const chapters = [];
+        const rawChapters = [];
         const regex = /<div class="chp-item">[\s\S]*?<a href="([^"]+)"[^>]*title="([^"]+)">[\s\S]*?<\/a>[\s\S]*?<\/div>/g;
 
         let match;
-        let count = 1;
         while ((match = regex.exec(htmlText)) !== null) {
-            chapters.push({
+            rawChapters.push({
                 href: match[1].trim(),
-                title: match[2].trim(),
-                number: count++
+                title: match[2].trim()
             });
         }
 
+        const total = rawChapters.length;
+        const chapters = rawChapters.map((ch, i) => ({
+            ...ch,
+            number: total - i 
+        }));
+
         if (chapters.length === 0) {
-            chapters.push({
+            return [{
                 href: url,
                 title: "Currently no chapters available",
                 number: 1
-            });
+            }];
         }
 
-        console.log(JSON.stringify(chapters.reverse()));
-        return chapters.reverse();
+        console.log(JSON.stringify(chapters));
+        return chapters;
     } catch (error) {
         console.log('Fetch error in extractChapters:', error);
         return [{
@@ -112,7 +116,6 @@ async function extractChapters(url) {
         }];
     }
 }
-
 
 
 async function extractText(url) {
@@ -141,6 +144,8 @@ async function extractText(url) {
         return JSON.stringify({ text: 'Error extracting text' });
     }
 }
+
+extractChapters('https://www.novelcool.com/novel/Shadow-Slave.html');
 
 async function soraFetch(url, options = { headers: {}, method: 'GET', body: null }) {
     try {
