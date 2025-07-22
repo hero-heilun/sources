@@ -1,4 +1,4 @@
-async function* searchResults(keyword) {
+async function searchResults(keyword) {
   try {
     const encodedKeyword = encodeURIComponent(keyword);
     const responseText = await soraFetch(`https://www.novelcool.com/search/?wd=${encodedKeyword}`);
