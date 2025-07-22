@@ -11,7 +11,7 @@
     "quality": "N/A",
     "baseUrl": "https://www.novelcool.com/",
     "searchBaseUrl": "https://www.novelcool.com/search/?wd=%s",
-    "scriptUrl": "https://raw.githubusercontent.com/50n50/temp/refs/heads/main/script.js",
+    "scriptUrl": "https://raw.githubusercontent.com/50n50/sources/refs/heads/main/novelcool/novelcool.js",
     "type": "novels",
     "asyncJS": true,
     "novel": true
