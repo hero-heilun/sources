@@ -1,39 +1,53 @@
 async function searchResults(keyword) {
-  try {
-    const encodedKeyword = encodeURIComponent(keyword);
-    const responseText = await soraFetch(`https://www.novelcool.com/search/?wd=${encodedKeyword}`);
-    const data = await responseText.text();
-    const results = [];
-    
-    const regex = /<div class="book-item"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/g;
-    let match;
-    
-    while ((match = regex.exec(data)) !== null) {
-      const bookItemHTML = match[1];
-      
-      if (bookItemHTML.includes('book-type-manga')) {
-        continue;
-      }
-      
-      const infoRegex = /<div class="book-info">[\s\S]*?<a href="([^"]+)"[^>]*>[\s\S]*?<div class="book-name[^>]*"[^>]*>(.*?)<\/div>/;
-      const infoMatch = infoRegex.exec(bookItemHTML);
-      
-      if (infoMatch) {
-        results.push({
-          title: infoMatch[2].trim(),
-          href: infoMatch[1].trim()
-        });
-      }
-    }
-    
-    console.log(JSON.stringify(results));
-    return JSON.stringify(results);
-  } catch (error) {
-    console.log('Fetch error in searchResults:', error);
-    return JSON.stringify([{ title: 'Error', href: '' }]);
-  }
-}
+    try {
+        const encodedKeyword = encodeURIComponent(keyword);
+        const response = await soraFetch(`https://www.novelcool.com/search/?name=${encodedKeyword}`);
+        const data = await response.text();
+        const results = [];
+        const regex = /<div class="book-item"[^>]*itemtype\s*=\s*["'][^"']*Book[^"']*["'][^>]*>([\s\S]*?)<\/div>\s*<\/div>/g;
+        let match;
+        while ((match = regex.exec(data)) !== null) {
+            const bookItemHTML = match[1];
+            if (bookItemHTML.includes('book-type-manga')) {
+                continue;
+            }
+            let titleMatch = bookItemHTML.match(/<div class="book-pic"[^>]*title="([^"]*)"/);
+            let title = "";
+            if (titleMatch && titleMatch[1]) {
+                title = titleMatch[1].trim();
+            } else {
+                titleMatch = bookItemHTML.match(/<div[^>]*\bclass\s*=\s*["'][^"']*book-name[^"']*["'][^>]*itemprop\s*=\s*["']name["'][^>]*>(.*?)<\/div>/);
+                if (titleMatch && titleMatch[1]) {
+                    title = titleMatch[1].trim();
+                }
+            }
+            const hrefMatch = bookItemHTML.match(/<a[^>]*href\s*=\s*["'](https:\/\/www\.novelcool\.com\/novel\/[^"']*)["'][^>]*itemprop\s*=\s*["']url["']|<a[^>]*href\s*=\s*["'](https:\/\/www\.novelcool\.com\/novel\/[^"']*)["']/);
+            const href = (hrefMatch && (hrefMatch[1] || hrefMatch[2])) ? (hrefMatch[1] || hrefMatch[2]).trim() : '';
+            const imgTagMatch = bookItemHTML.match(/<img[^>]*itemprop\s*=\s*["']image["'][^>]*>/i);
+            let image = '';
+            if (imgTagMatch) {
+                const imgTag = imgTagMatch[0];
+                const srcMatch = imgTag.match(/\bsrc\s*=\s*["']([^"']*)["']/i);
+                if (srcMatch && srcMatch[1]) {
+                    image = srcMatch[1].trim();
+                }
+            }
+            if (title && href) {
+                results.push({
+                    title: title,
+                    href: href,
+                    image: image 
+                });
+            }
 
+        }
+        console.log("Search Results:", results); 
+        return JSON.stringify(results);
+    } catch (error) {
+        console.error('Fetch error in searchResults:', error);
+        return JSON.stringify([{ title: 'Error', href: '', image: '' }]);
+    }
+}
 
 async function extractDetails(url) {
     try {
