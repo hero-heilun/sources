@@ -106,7 +106,7 @@ async function extractChapters(url) {
         }
 
         console.log(JSON.stringify(chapters));
-        return chapters;
+        return chapters.reverse();
     } catch (error) {
         console.log('Fetch error in extractChapters:', error);
         return [{
