@@ -191,7 +191,7 @@ async function extractText(url) {
         
     } catch (error) {
         console.error("Fetch error in extractText: " + error.message);
-        return '<p>Error extracting text: ' + error.message + '</p>';
+        return '<p>Error: This is chapter is locked as early access by the website, you will have to pay on the website or wait for the chapter to be released globally</p>';
     }
 }
 
