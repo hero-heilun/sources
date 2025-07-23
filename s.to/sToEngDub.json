@@ -5,7 +5,7 @@
         "name": "Cufiy",
         "icon": "https://files.catbox.moe/ttj4fc.gif"
     },
-    "version": "0.3.13",
+    "version": "0.3.14",
     "language": "English (DUB)",
     "streamType": "HLS",
     "quality": "720p",
