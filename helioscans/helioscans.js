@@ -113,21 +113,85 @@ async function extractChapters(url) {
 
 async function extractText(url) {
     try {
-        const response = await soraFetch(url);
+        const headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1'
+        };
+        
+        const response = await soraFetch(url, headers);
         const htmlText = await response.text();
-        const contentRegex = /<div[^>]*id="chapter"[^>]*>([\s\S]*?)<\/div>/i;
-        const match = contentRegex.exec(htmlText);
-        if (!match) { throw new Error("Chapter content div not found"); }
-        let innerContent = match[1];
-        innerContent = innerContent.replace(/<script[\s\S]*?<\/script>/gi, '');
-        innerContent = innerContent.replace(/<div[^>]*class="[^"]*flex[^"]*justify-center[^"]*items-center[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
+        
+        const startMarker = '<div id="pages"';
+        const startIndex = htmlText.indexOf(startMarker);
+        if (startIndex === -1) {
+            throw new Error("Pages content div start (<div id=\"pages\") not found");
+        }
+        
+        const startTagEndIndex = htmlText.indexOf('>', startIndex);
+        if (startTagEndIndex === -1) {
+            throw new Error("Could not find the end of the opening <div id=\"pages\"> tag");
+        }
+        
+        const contentStartIndex = startTagEndIndex + 1;
+        let depth = 1;
+        let pos = contentStartIndex;
+        let endIndex = -1;
+        
+        while (depth > 0 && pos < htmlText.length) {
+            const nextOpenDiv = htmlText.indexOf('<div', pos);
+            const nextCloseDiv = htmlText.indexOf('</div', pos);
+            
+            if (nextCloseDiv === -1) {
+                break;
+            }
+            
+            if (nextOpenDiv !== -1 && nextOpenDiv < nextCloseDiv) {
+                depth++;
+                pos = nextOpenDiv + 4;
+            } else {
+                depth--;
+                if (depth === 0) {
+                    endIndex = nextCloseDiv;
+                } else {
+                    pos = nextCloseDiv + 5;
+                }
+            }
+        }
+        
+        if (endIndex === -1) {
+            throw new Error("Matching closing </div> for pages content div not found");
+        }
+        
+        let innerContent = htmlText.substring(contentStartIndex, endIndex);
+        
+        innerContent = innerContent.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+        innerContent = innerContent.replace(/<div[^>]*class="[^"]*fixed[^"]*z-\[60\][^"]*top-0[^"]*left-0[^"]*w-full[^"]*h-full[^"]*bg-black\/90[^"]*flex[^"]*justify-center[^"]*items-center[\s\S]*?<\/div>/gi, '');
+        
+        const paragraphRegex = /<p[^>]*>(.*?)<\/p>/gi;
+        let textContent = '';
+        let match;
+        
+        while ((match = paragraphRegex.exec(innerContent)) !== null) {
+            const paragraphText = match[1].replace(/<[^>]*>/g, '').trim();
+            if (paragraphText) {
+                textContent += paragraphText + '\n';
+            }
+        }
+        
         innerContent = innerContent.trim();
-        if (!innerContent) { throw new Error("Chapter text not found or empty after cleaning"); }
-        console.log(innerContent);
+        
+        if (!innerContent && !textContent) {
+            throw new Error("Chapter text not found or empty after cleaning");
+        }
+        console.log(innerContent || textContent);
         return innerContent;
+        
     } catch (error) {
-        console.log("Fetch error in extractText: " + error);
-        return '<p>Error extracting text</p>';
+        console.error("Fetch error in extractText: " + error.message);
+        return '<p>Error extracting text: ' + error.message + '</p>';
     }
 }
 
