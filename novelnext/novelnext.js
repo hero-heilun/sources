@@ -98,7 +98,7 @@ async function extractChapters(url) {
 
     let match;
     while ((match = chapterRegex.exec(chaptersHtml)) !== null) {
-      const href = "https://readnovelfull.com" + match[1];
+      const href = match[1];
       const titleFromAttr = match[2].trim();
       const titleFromSpan = match[3].replace(/\s+/g, ' ').trim();
 
