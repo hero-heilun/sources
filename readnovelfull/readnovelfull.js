@@ -1,7 +1,7 @@
 async function searchResults(keyword) {
     try {
         const encodedKeyword = encodeURIComponent(keyword);
-        const url = `https://novelbin.me/search?keyword=${encodedKeyword}`;
+        const url = `https://readnovelfull.com/novel-list/search?keyword=${encodedKeyword}`;
         const response = await soraFetch(url);
         const html = await response.text();
 
@@ -21,7 +21,7 @@ async function searchResults(keyword) {
 
                 results.push({
                     title: decodeHtmlEntities(linkMatch[2]),
-                    href: linkMatch[1],
+                    href: "https://readnovelfull.com" +linkMatch[1],
                     image
                 });
             }
@@ -39,6 +39,8 @@ async function searchResults(keyword) {
     }
 }
 
+extractChapters('https://readnovelfull.com/genius-club.html');
+
 async function extractDetails(url) {
   try {
     const response = await soraFetch(url);
@@ -46,8 +48,12 @@ async function extractDetails(url) {
 
     const descMatch = htmlText.match(/<div class="desc-text"[^>]*itemprop="description"[^>]*>([\s\S]*?)<\/div>/i);
 
-    const description = descMatch
-      ? descMatch[1].replace(/\s+/g, ' ').trim()
+    let description = descMatch
+      ? descMatch[1]
+          .replace(/<p[^>]*>/gi, '')
+          .replace(/<\/p>/gi, '')
+          .replace(/\s+/g, ' ')
+          .trim()
       : "No description available";
 
     const aliases = 'N/A';
@@ -72,7 +78,6 @@ async function extractDetails(url) {
   }
 }
 
-
 async function extractChapters(url) {
   try {
     const response = await soraFetch(url);
@@ -84,15 +89,15 @@ async function extractChapters(url) {
     }
     const novelId = novelIdMatch[1];
 
-    const chaptersResponse = await soraFetch(`https://novelbin.me/ajax/chapter-archive?novelId=${novelId}`);
+    const chaptersResponse = await soraFetch(`https://readnovelfull.com/ajax/chapter-archive?novelId=${novelId}`);
     const chaptersHtml = await chaptersResponse.text();
 
     const chapters = [];
-    const chapterRegex = /<a\s+href="([^"]+)"\s+title="([^"]+)"[^>]*>[\s\S]*?<span[^>]*class="[^"]*\bchapter-title\b[^"]*"[^>]*>([\s\S]*?)<\/span>/gi;
+    const chapterRegex = /<a\s+href="([^"]+)"\s+title="([^"]+)"[^>]*>[\s\S]*?<span[^>]*class="[^"]*\bnchr-text\b[^"]*"[^>]*>([\s\S]*?)<\/span>/gi;
 
     let match;
     while ((match = chapterRegex.exec(chaptersHtml)) !== null) {
-      const href = match[1];
+      const href = "https://readnovelfull.com" + match[1];
       const titleFromAttr = match[2].trim();
       const titleFromSpan = match[3].replace(/\s+/g, ' ').trim();
 
@@ -124,35 +129,6 @@ async function extractChapters(url) {
   }
 }
 
-async function extractText(url) {
-  try {
-    const response = await soraFetch(url);
-    let htmlText = await response.text();
-
-    const match = htmlText.match(/<div id="chr-content"[^>]*>([\s\S]*?)<\/div>/i);
-    if (!match || !match[1]) {
-      throw new Error("chr-content div not found");
-    }
-
-    let content = match[1];
-
-    content = content.replace(/<div id="pf-\d+-\d+"[^>]*>[\s\S]*?<\/div>/gi, '');
-    content = content.replace(/<script[\s\S]*?<\/script>/gi, '');
-
-    content = content.replace(/\s+/g, ' ').trim();
-
-    if (!content) {
-      throw new Error("No usable content extracted");
-    }
-
-    console.log(content);
-    return content;
-
-  } catch (error) {
-    console.log("Fetch error in extractText: " + error.message);
-    return '<p>Error extracting text</p>';
-  }
-}
 
 async function soraFetch(url, options = {
     headers: {},
