@@ -159,7 +159,6 @@ async function extractText(url) {
       
       content = content.replace(/<div id="pf-\d+-\d+"[^>]*>[\s\S]*?<\/div>/gi, '');
       content = content.replace(/<script[\s\S]*?<\/script>/gi, '');
-      content = content.replace(/<[^>]+>/g, ''); 
       content = content.replace(/\s+/g, ' ').trim();
       
       if (!content) {
