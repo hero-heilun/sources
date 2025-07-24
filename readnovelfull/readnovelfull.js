@@ -39,8 +39,6 @@ async function searchResults(keyword) {
     }
 }
 
-extractChapters('https://readnovelfull.com/genius-club.html');
-
 async function extractDetails(url) {
   try {
     const response = await soraFetch(url);
@@ -129,6 +127,66 @@ async function extractChapters(url) {
   }
 }
 
+async function extractText(url) {
+  try {
+    const response = await soraFetch(url);
+    let htmlText = await response.text();
+    console.log(htmlText);
+    const startPattern = /<div class="text-center ads-holder ads-top"[^>]*>[\s\S]*?<\/div>/;
+    const endPattern = /<div class="chr-nav" id="chr-nav-bottom">/;
+    
+    const startMatch = htmlText.search(startPattern);
+    const endMatch = htmlText.search(endPattern);
+    
+    if (startMatch === -1 || endMatch === -1) {
+      const contentStartPattern = /<div id="chr-content"[^>]*>/;
+      const contentEndPattern = /<hr class="chr-end">/;
+      
+      const contentStartMatch = htmlText.search(contentStartPattern);
+      const contentEndMatch = htmlText.search(contentEndPattern);
+      
+      if (contentStartMatch === -1 || contentEndMatch === -1) {
+        throw new Error("Content markers not found");
+      }
+      
+      const contentStartIndex = htmlText.match(contentStartPattern)[0].length + contentStartMatch;
+      let content = htmlText.substring(contentStartIndex, contentEndMatch).trim();
+      
+      content = content.replace(/<div id="pf-\d+-\d+"[^>]*>[\s\S]*?<\/div>/gi, '');
+      content = content.replace(/<script[\s\S]*?<\/script>/gi, '');
+      content = content.replace(/<[^>]+>/g, ''); 
+      content = content.replace(/\s+/g, ' ').trim();
+      
+      if (!content) {
+        throw new Error("No content found between markers");
+      }
+      
+      console.log(content);
+      return content;
+    }
+    
+    const startIndex = htmlText.match(startPattern)[0].length + startMatch;
+    let content = htmlText.substring(startIndex, endMatch).trim();
+    
+    content = content.replace(/<div id="pf-\d+-\d+"[^>]*>[\s\S]*?<\/div>/gi, '');
+    content = content.replace(/<script[\s\S]*?<\/script>/gi, '');
+    content = content.replace(/<div class="text-center ads-holder[^>]*>[\s\S]*?<\/div>/gi, '');
+    content = content.replace(/<div class="ads-holder[^>]*>[\s\S]*?<\/div>/gi, '');
+    content = content.replace(/<[^>]+>/g, ''); 
+    content = content.replace(/\s+/g, ' ').trim();
+    
+    if (!content) {
+      throw new Error("No content found between markers");
+    }
+    
+    console.log(content);
+    return content;
+    
+  } catch (error) {
+    console.log("Fetch error in extractText: " + error);
+    return '<p>Error extracting text</p>';
+  }
+}
 
 async function soraFetch(url, options = {
     headers: {},
