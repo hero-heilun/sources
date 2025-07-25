@@ -6,11 +6,11 @@ function searchResults(html) {
 
     const results = [];
 
-    const titleRegex = /<h2[^>]*>(.*?)<\/h2>/;
+    const titleRegex = /<h4[^>]*>(.*?)<\/h4>/;
     const hrefRegex = /<a\s+href="([^"]+)"\s*[^>]*>/;
     const imgRegex = /<img[^>]*src="([^"]+)"[^>]*>/;
 
-    const itemRegex = /<div class="my-2 w-64[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/g;
+    const itemRegex = /<a\s+href="[^"]+"\s+class="btn btn-md btn-light simple-title-card[^"]*"[^>]*>[\s\S]*?<\/a>/g;
     const items = html.match(itemRegex) || [];
 
     items.forEach((itemHtml, index) => {
