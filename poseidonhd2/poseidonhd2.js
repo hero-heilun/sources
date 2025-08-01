@@ -221,8 +221,7 @@ async function extractStreamUrl(urlData) {
     }
 
     const final = {
-        streams,
-        subtitles: ""
+        streams
     };
 
     return JSON.stringify(final);
