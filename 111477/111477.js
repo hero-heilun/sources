@@ -197,7 +197,7 @@ async function extractStreamUrl(url) {
   }
   
   try {
-    const response = await fetchv2(url);
+    const response = await fetchv2(decodeURIComponent(url));
     const html = await response.text();
     
     const mkvRegex = /<tr><td><a href="([^"]+\.mkv)"[^>]*>([^<]+\.mkv)<\/a><\/td>/g;
