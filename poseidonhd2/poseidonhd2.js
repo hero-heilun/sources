@@ -231,6 +231,7 @@ async function extractStreamUrl(input) {
         streams,
         subtitles: ""
     };
-
+    
+    console.log(JSON.stringify(final))
     return JSON.stringify(final);
 }
