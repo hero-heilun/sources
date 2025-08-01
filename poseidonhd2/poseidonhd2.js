@@ -142,10 +142,9 @@ async function extractEpisodes(url) {
 }
 
 async function extractStreamUrl(urlData) {
-
     const languageBlocks = urlData.split("|");
     const streamwishLinks = {};
-
+    
     for (const block of languageBlocks) {
         const match = block.match(/^([^:]+):streamwish:(.+)$/);
         if (!match) continue;
@@ -157,8 +156,9 @@ async function extractStreamUrl(urlData) {
             else if (lang === "Subtitulado") streamwishLinks.subtitulado = link;
         }
     }
+    
     console.log("Parsed streamwishLinks: " + JSON.stringify(streamwishLinks));
-
+    
     async function getVarUrl(link) {
         try {
             const res = await fetchv2(link);
@@ -169,22 +169,17 @@ async function extractStreamUrl(urlData) {
             return null;
         }
     }
-
+    
     async function getFinalStream(link) {
         try {
             const res = await fetchv2(link);
             const html = await res.text();
-
             const scriptMatch = html.match(/eval\(function\(p,a,c,k,e,d\)\{[\s\S]+?\}\('.*?'\,\d+\,\d+\,'.*?'\.split\('\|'\)\)\)/);
             if (!scriptMatch) return null;
-
             const packed = scriptMatch[0];
             console.log("Obfuscated eval function found: " + packed.substring(0, 500));
-
             const unpacked = unpack(packed);
-
             console.log("Unpacked code snippet: " + unpacked.substring(0, 500));
-
             const hls2Match = unpacked.match(/"hls2"\s*:\s*"([^"]+)"/);
             return hls2Match ? hls2Match[1] : null;
         } catch (err) {
@@ -192,38 +187,37 @@ async function extractStreamUrl(urlData) {
             return null;
         }
     }
-
+    
     function rewriteStreamwishUrl(url) {
         return url.replace(/^https?:\/\/streamwish\.to\//, "https://xenolyzb.com/");
     }
-
+    
     const streams = [];
-
+    
     for (const [langKey, embedUrl] of Object.entries(streamwishLinks)) {
         const varUrlRaw = await getVarUrl(embedUrl);
         if (!varUrlRaw) continue;
-
         const varUrl = rewriteStreamwishUrl(varUrlRaw);
         const hls2 = await getFinalStream(varUrl);
         if (!hls2) continue;
-
+        
         const label =
             langKey === "latino" ? "LATINO" :
             langKey === "espanol" ? "CASTELLANO" :
             langKey === "subtitulado" ? "SUB" :
             langKey.toUpperCase();
-
-        streams.push({ label, url: hls2 });
+            
+        streams.push(label, hls2);
     }
-
+    
     if (streams.length === 0) {
-        return "ijreojgfeirofjoie";
+        return "deijdjiwjdiwaidjwaodjiasjdioajidofejhifophwufipheuipfhepiuwghuiphfipehifspehwuipfhewipfhewhfuihfdlshfjkshfudislvhjdkslvsdjkl";
     }
-
+    
     const final = {
         streams
     };
-
+    
     return JSON.stringify(final);
 }
 
