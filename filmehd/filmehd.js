@@ -130,39 +130,41 @@ async function extractStreamUrl(url) {
         };
         const response = await fetchv2(url, headers);
         const html = await response.text();
+
         const iframeMatch = /<iframe[^>]+src="([^"]+)"[^>]*><\/iframe>/i.exec(html);
         if (!iframeMatch) throw new Error("Iframe not found");
         const iframeUrl = iframeMatch[1].trim();
+
         const iframeResponse = await fetchv2(iframeUrl, headers);
         const iframeContent = await iframeResponse.text();
+
         console.log(`[Debug] Iframe content: ${iframeContent}`);
-        // Extract the obfuscated script content
+
         const scriptMatch = iframeContent.match(/<script[^>]*>\s*(eval\(function\(p,a,c,k,e,d.*?\)[\s\S]*?)<\/script>/);
-        
-        if (scriptMatch) {
-            // Extract just the eval content 
-            const evalContent = scriptMatch[1];
-            
-            // Unpack the script
-            const unpackedScript = unpack(evalContent);
-            
-            // Extract the file URL from the unpacked script - look for sources array
-            const fileMatch = /sources:\s*\[\s*\{\s*file:\s*"([^"]+\.m3u8[^"]*)"/.exec(unpackedScript);
-            
-            if (fileMatch) {
-                return fileMatch[1];
-            }
-        }
-        
-        throw new Error("Stream URL not found");
-        
+
+        if (!scriptMatch) throw new Error("Obfuscated script not found");
+        const evalContent = scriptMatch[1];
+
+        const unpackedScript = unpack(evalContent); 
+
+        const fileMatch = /sources:\s*\[\s*\{\s*file:\s*"([^"]+\.m3u8[^"]*)"/.exec(unpackedScript);
+        if (!fileMatch) throw new Error("Stream URL not found");
+
+
+        const subtitleMatch = /tracks:\s*\[\s*\{\s*file:\s*"([^"]+\.vtt[^"]*)"/.exec(unpackedScript);
+
+        return JSON.stringify({
+            stream: fileMatch[1],
+            subtitles: subtitleMatch ? subtitleMatch[1] : null
+        });
     } catch (err) {
-        console.error("Error extracting stream URL:"+ err);
-        return "https://files.catbox.moe/avolvc.mp4";
+        console.error("Error extracting stream URL:", err);
+        return JSON.stringify({
+            stream: "https://files.catbox.moe/avolvc.mp4",
+            subtitles: null
+        });
     }
 }
-
-
 
 /*
  * UNPACKER MODULE
