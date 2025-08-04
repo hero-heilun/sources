@@ -104,7 +104,7 @@ async function extractStreamUrl(url) {
         };
 
         console.log("RETURN: " + JSON.stringify(final));
-        return JSON.stringify("final");
+        return JSON.stringify(final);
 
     } catch (err) {
         console.log("Error in extractStreamUrl:"+ err);
