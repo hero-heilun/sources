@@ -13,7 +13,6 @@ async function searchResults(keyword) {
 
         const response = await fetchv2("https://vegamovies.bh/", headers, "POST", postData);
         const html = await response.text();
-        console.log(html);
 
         
         const regex = /<a[^>]+href="([^"]+)"[^>]*title="([^"]+)"[^>]*class="blog-img[^"]*"[^>]*>\s*<img[^>]+src="([^"]+)"[^>]*>/g;
@@ -89,7 +88,7 @@ async function extractStreamUrl(url) {
                 console.log(link);
                 const res = await fetchv2("https://passthrough-worker.simplepostrequest.workers.dev/?url=" + link);
                 const page = await res.text();
-                //console.log(page);
+                
                 const vdMatch = page.match(/<a id="vd" href="([^"]+)"/);
                 if (vdMatch && vdMatch[1]) {
                     streams.push(quality, vdMatch[1]);
