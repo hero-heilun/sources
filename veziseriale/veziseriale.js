@@ -1,3 +1,23 @@
+function cleanTitle(title) {
+    return title
+        .replace(/&#8217;/g, "'")   // right single quote
+        .replace(/&#8216;/g, "'")   // left single quote
+        .replace(/&#8220;/g, '"')   // left double quote
+        .replace(/&#8221;/g, '"')   // right double quote
+        .replace(/&#8211;/g, "-")   // en dash
+        .replace(/&#8212;/g, "-")   // em dash
+        .replace(/&quot;/g, '"')    // double quote
+        .replace(/&apos;/g, "'")    // apostrophe
+        .replace(/&amp;/g, "&")     // ampersand
+        .replace(/&lt;/g, "<")      // less-than
+        .replace(/&gt;/g, ">")      // greater-than
+        .replace(/&nbsp;/g, " ")    // non-breaking space
+        .replace(/&#[0-9]+;/g, "")  // other numeric entities
+        .replace(/&[a-z]+;/gi, "")  // other named entities
+        .replace(/\s+/g, " ")       // collapse multiple spaces
+        .trim();                    // remove leading/trailing spaces
+}
+
 async function searchResults(keyword) {
     const results = [];
     try {
@@ -8,7 +28,7 @@ async function searchResults(keyword) {
         let match;
         while ((match = regex.exec(html)) !== null) {
             results.push({
-                title: match[2].trim(),
+                title: cleanTitle(match[2]),
                 image: match[1].trim(),
                 href: match[3].trim()
             });
@@ -30,7 +50,7 @@ async function extractDetails(url) {
         const html = await response.text();
 
         const divMatch = html.match(/<div class="wp-content">([\s\S]*?)<\/div>/i);
-        var description = "Idk it don't got a description twin";
+        var description = "Idk why it don't got a description twin";
 
         if (divMatch) {
             var rawText = divMatch[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
