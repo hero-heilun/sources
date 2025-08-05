@@ -1,16 +1,16 @@
 {
-    "sourceName": "GojoWTF",
+    "sourceName": "Animetsu",
     "iconUrl": "https://raw.githubusercontent.com/50n50/sources/refs/heads/main/gojowtf/gojowtf.png",
     "author": {
         "name": "50/50",
         "icon": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ3122kQwublLkZ6rf1fEpUP79BxZOFmH9BSA&s"
     },
     "version": "1.2.5",
-    "language": "English (SUB)",
+    "language": "English (DUB/SUB)",
     "streamType": "HLS",
     "quality": "1080p",
-    "baseUrl": "https://gojo.live/",
-    "searchBaseUrl": "https://gojo.live/",
+    "baseUrl": "https://animetsu.to/",
+    "searchBaseUrl": "https://animetsu.to/",
     "scriptUrl": "https://raw.githubusercontent.com/50n50/sources/refs/heads/main/gojowtf/gojowtf.js",
     "asyncJS": true,
     "type": "anime",
