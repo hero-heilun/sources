@@ -109,7 +109,7 @@ async function extractStreamUrl(slug) {
     };
 
     console.log("RETURN: " + JSON.stringify(final));
-    return JSON.stringify("final");
+    return JSON.stringify(final);
 }
 
 
