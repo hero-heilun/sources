@@ -88,6 +88,11 @@ async function extractStreamUrl(slug) {
     const unfixedSlug = fixedSlug.replace('?', '&');
 
     for (const server of serverList) {
+        if (server.name?.toLowerCase().includes('zoro') || server.id?.toLowerCase().includes('zoro')) {
+            console.log(`Skipping Zoro server: ${server.name || server.id}`);
+            continue;
+        }
+
         for (const subType of ['sub', ...(server.hasDub ? ['dub'] : [])]) {
             const url = `https://backend.animetsu.to/api/anime/tiddies?server=${server.id}${unfixedSlug}&subType=${subType}`;
             console.log("Fetching stream URL:" + url);
@@ -96,7 +101,7 @@ async function extractStreamUrl(slug) {
 
             if (data?.sources?.length) {
                 for (const { quality, url: streamUrl } of data.sources) {
-                    const language = subType.toUpperCase();
+                    const language = subType === 'sub' ? 'HARDSUB' : subType.toUpperCase();
                     streams.push(`${server.id} - ${quality} - ${language}`, streamUrl);
                 }
             }
@@ -105,12 +110,13 @@ async function extractStreamUrl(slug) {
 
     const final = {
         streams,
-        subtitles: ""  
+        subtitles: ""
     };
 
     console.log("RETURN: " + JSON.stringify(final));
     return JSON.stringify(final);
 }
+
 
 
 
