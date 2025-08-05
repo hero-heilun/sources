@@ -1,17 +1,7 @@
 async function searchResults(keyword) {
     const results = [];
     try {
-        const postData = {
-            "do": "search",
-            "subaction": "search",
-            "story": keyword
-        };
-
-        const headers = {
-            "Content-Type": "application/x-www-form-urlencoded"
-        };
-
-        const response = await fetchv2("https://vegamovies.bh/", headers, "POST", postData);
+        const response = await fetchv2(`https://passthrough-worker.simplepostrequest.workers.dev/?url=https://vegamovies.bh/&type=formdata&body=do%3Dsearch%26subaction%3Dsearch%26story%3D${keyword}&origin=https://vegamovies.bh&referer=https://vegamovies.bh/&ua=Mozilla/5.0%20(Windows%20NT%2010.0;%20Win64;%20x64)%20AppleWebKit/537.36%20(KHTML,%20like%20Gecko)%20Chrome/120.0.0.0%20Safari/537.36`;
         const html = await response.text();
 
         
