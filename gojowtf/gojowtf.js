@@ -1,12 +1,12 @@
 async function searchResults(keyword) {
     const results = [];
     const headers = {
-        'Referer': 'https://gojo.live/',
+        'Referer': 'https://animetsu.to/',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     };
 
     const encodedKeyword = encodeURIComponent(keyword);
-    const response = await fetchv2(`https://backend.gojo.live/api/anime/search?query=${encodedKeyword}&page=1`, headers);
+    const response = await fetchv2(`https://backend.animetsu.to/api/anime/search?query=${encodedKeyword}&page=1&perPage=1000`, headers);
     const json = await response.json();
 
     json.results.forEach(anime => {
@@ -35,14 +35,14 @@ async function searchResults(keyword) {
 async function extractDetails(id) {
     const results = [];
     const headers = {
-        'Referer': 'https://gojo.live/',
+        'Referer': 'https://animetsu.to/',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     };
 
-    const response = await fetchv2(`https://backend.gojo.live/api/anime/info/${id}`, headers);
+    const response = await fetchv2(`https://backend.animetsu.to/api/anime/info/${id}`, headers);
     const json = await response.json();
 
-    const description = cleanHtmlSymbols(json.description) || "No description available"; // Handling case where description might be missing
+    const description = cleanHtmlSymbols(json.description) || "No description available"; 
 
     results.push({
         description: description.replace(/<br>/g, ''),
@@ -56,79 +56,60 @@ async function extractDetails(id) {
 async function extractEpisodes(id) {
     const results = [];
     const headers = {
-        'Referer': 'https://gojo.live/',
+        'Referer': 'https://animetsu.to/',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     };
 
-    const response = await fetchv2(`https://backend.gojo.live/api/anime/episodes/${id}`, headers);
+    const response = await fetchv2(`https://backend.animetsu.to/api/anime/eps/${id}`, headers);
     const json = await response.json();
 
-    const providers = ["pahe", "zaza", "strix"]
-        .map(p => ({ id: p, episodes: (json.find(j => j.providerId === p)?.episodes || []) }));
-
-    const paheEpisodes = providers.find(p => p.id === "pahe").episodes;
-
-    for (const ep of paheEpisodes) {
-        const parts = [`${id}/pahe/${ep.number}/${ep.id}`];
-
-        for (const provider of providers) {
-            if (provider.id === "pahe") continue; // already added
-
-            const foundEp = provider.episodes.find(e => e.number === ep.number);
-            if (foundEp) {
-                parts.push(`${provider.id}/${foundEp.number}/${foundEp.id}`);
-            }
-        }
-
+    for (const ep of json) {
         results.push({
-            href: parts.join('/'),
-            number: ep.number
+            number: ep.number,
+            href: `&id=${id}&num=${ep.number}`
         });
     }
 
-    console.error(JSON.stringify(results));
     return JSON.stringify(results);
 }
 
-async function extractStreamUrl(url) {
-    const parts = url.split('/');
-    const [id, ...rest] = parts;
-
-    const providers = [];
-    for (let i = 0; i < rest.length; i += 3) {
-        const [provider, number, episodeId] = rest.slice(i, i + 3);
-        if (provider && episodeId && episodeId !== "null") {
-            providers.push({ provider, number, episodeId });
-        }
-    }
-
-    console.error(`ID: ${id}, Providers: ${providers.map(p => p.provider).join(', ')}`);
-
+async function extractStreamUrl(slug) {
     const headers = {
-        'Referer': 'https://gojo.live/',
+        'Referer': 'https://animetsu.to/',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     };
 
-    const fetches = providers.map(({ provider, number, episodeId }) =>
-        fetchv2(
-            `https://backend.gojo.live/api/anime/tiddies?provider=${provider}&id=${id}&num=${number}&subType=sub&watchId=${episodeId}&dub_id=null`,
-            headers
-        )
-            .then(res => res.json())
-            .then(json => (json.sources || []).map(src => ({ provider, quality: src.quality, url: src.url })))
-            .catch(() => [])
-    );
-
-    const allSources = (await Promise.all(fetches)).flat();
-
+    const fixedSlug = slug.replace('&', '?');
     const streams = [];
-    for (const { provider, quality, url: streamUrl } of allSources) {
-        streams.push(`${provider} - ${quality}`, streamUrl);
+
+    const serverListRes = await fetchv2(`https://backend.animetsu.to/api/anime/servers${fixedSlug}`, headers);
+    const serverList = await serverListRes.json();
+    console.log("Fetched server list: " + JSON.stringify(serverList));
+    const unfixedSlug = fixedSlug.replace('?', '&');
+
+    for (const server of serverList) {
+        for (const subType of ['sub', ...(server.hasDub ? ['dub'] : [])]) {
+            const url = `https://backend.animetsu.to/api/anime/tiddies?server=${server.id}${unfixedSlug}&subType=${subType}`;
+            console.log("Fetching stream URL:" + url);
+            const res = await fetchv2(url, headers);
+            const data = await res.json();
+
+            if (data?.sources?.length) {
+                for (const { quality, url: streamUrl } of data.sources) {
+                    const language = subType.toUpperCase();
+                    streams.push(`${server.id} - ${quality} - ${language}`, streamUrl);
+                }
+            }
+        }
     }
 
-    const result = { streams };
-    console.log(JSON.stringify(result));
-    return JSON.stringify(result);
+    const final = {
+        streams,
+        subtitles: ""  
+    };
+
+    console.log("RETURN: " + JSON.stringify(final));
+    return JSON.stringify("final");
 }
 
 
