@@ -30,7 +30,7 @@ async function extractDetails(url) {
         const html = await response.text();
 
         const divMatch = html.match(/<div class="wp-content">([\s\S]*?)<\/div>/i);
-        var description = "N/A";
+        var description = "Idk it don't got a description twin";
 
         if (divMatch) {
             var rawText = divMatch[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
@@ -63,6 +63,10 @@ async function extractDetails(url) {
 async function extractEpisodes(url) {
   const results = [];
   try {
+    if (url.includes("/filme/")) {
+      return JSON.stringify([{ href: url, number: 1 }]);
+    }
+
     const response = await fetchv2(url);
     const html = await response.text();
 
