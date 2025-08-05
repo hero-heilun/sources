@@ -63,41 +63,54 @@ async function extractDetails(url) {
 }
 
 async function extractEpisodes(url) {
-  const results = [];
-
-  const one = await fetchv2(url);
-  const html = await one.text();
-
-  const episodesMatch = html.match(/"episodes"\s*:\s*(\d+)/);
-  const episodes = episodesMatch ? parseInt(episodesMatch[1], 10) : null;
-
-  const idMatch = html.match(/"id_serie"\s*:\s*(\d+)/);
-  const serieId = idMatch ? parseInt(idMatch[1], 10) : null;
-
-  if (!episodes || !serieId) {
-    console.log("Failed to extract episode count or serie ID.");
-    return JSON.stringify([{ href: "Error", number: "Error" }]);
-  }
-
-  const totalPages = Math.ceil(episodes / 25);
-
   try {
-    for (let page = 1; page <= totalPages; page++) {
-      console.log(`Fetching page ${page} of ${totalPages}...`);
-      const apiUrl = `https://apiv3-prd.anroll.net/animes/${serieId}/episodes?page=${page}&order=desc`;
-      const response = await fetchv2(apiUrl);
-      const json = await response.json();
-
-      if (json && json.data && Array.isArray(json.data)) {
-        for (const ep of json.data) {
-          results.push({
-            href: "https://www.anroll.net/watch/e/" + ep.generate_id,
-            number: parseInt(ep.n_episodio, 10),
-          });
-        }
-      }
+    const results = [];
+    
+    const response = await fetchv2(url);
+    const html = await response.text();
+    
+    const episodesMatch = html.match(/"episodes"\s*:\s*(\d+)/);
+    const episodes = episodesMatch ? parseInt(episodesMatch[1], 10) : null;
+    const idMatch = html.match(/"id_serie"\s*:\s*(\d+)/);
+    const serieId = idMatch ? parseInt(idMatch[1], 10) : null;
+    
+    if (!episodes || !serieId) {
+      console.log("Failed to extract episode count or serie ID.");
+      return JSON.stringify([{ href: "Error", number: "Error" }]);
     }
-
+    
+    const totalPages = Math.ceil(episodes / 25);
+    
+    const pagePromises = [];
+    for (let page = 1; page <= totalPages; page++) {
+      const apiUrl = `https://apiv3-prd.anroll.net/animes/${serieId}/episodes?page=${page}&order=desc`;
+      
+      pagePromises.push(
+        fetchv2(apiUrl)
+          .then(response => response.json())
+          .then(json => {
+            console.log(`Fetched page ${page} of ${totalPages}...`);
+            if (json && json.data && Array.isArray(json.data)) {
+              return json.data.map(ep => ({
+                href: "https://www.anroll.net/watch/e/" + ep.generate_id,
+                number: parseInt(ep.n_episodio, 10),
+              }));
+            }
+            return [];
+          })
+          .catch(error => {
+            console.log(`Error fetching page ${page}:`, error);
+            return [];
+          })
+      );
+    }
+    
+    const pageResults = await Promise.all(pagePromises);
+    
+    pageResults.forEach(pageEpisodes => {
+      results.push(...pageEpisodes);
+    });
+    
     return JSON.stringify(results.reverse());
   } catch (err) {
     console.log("Error during fetch:", err);
