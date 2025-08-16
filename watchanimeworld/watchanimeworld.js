@@ -133,7 +133,7 @@ async function extractStreamUrl(url) {
         }
         
         const decodedUrl = decodeURIComponent(match[1]);
-        const fixedUrl = decodedUrl.replace(/\\/g, '').replace(/%5C/g, '/'); /
+        const fixedUrl = decodedUrl.replace(/\\/g, '').replace(/%5C/g, '/'); 
         
         return fixedUrl;
     } catch (err) { 
