@@ -120,7 +120,7 @@ async function extractStreamUrl(url) {
             try {
                 const passthroughUrl = "https://passthrough-worker.simplepostrequest.workers.dev/?head=" + encodeURIComponent(testUrl);
                 const resText = await fetchv2(passthroughUrl).then(r => r.text());
-                if (!/Error 404/i.test(resText)) {
+                if (!/Status:404/i.test(resText)) {
                     fullUrl = testUrl;
                     break;
                 }
