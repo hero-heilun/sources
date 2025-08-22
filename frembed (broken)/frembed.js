@@ -70,7 +70,7 @@ async function extractEpisodes(showId) {
     }
 }
 
-async function extractStreamUrl(url) {if (_0xCheck()) {
+async function extractStreamUrl(url) {
     try {
         const headers = {
             'Referer': 'https://frembed.xyz',
@@ -108,9 +108,8 @@ async function extractStreamUrl(url) {if (_0xCheck()) {
     console.log("Fetch error:", error);
     return null;
   }
-  }
-  return 'https://files.catbox.moe/avolvc.mp4';
 }
+
 
 /* SCHEME START */
 
