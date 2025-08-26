@@ -127,10 +127,15 @@ async function extractEpisodes(url) {
     
     console.log(`Total episodes found: ${results.length}`);
     
-    // 为了完全避免Sora应用的剧集选择问题，返回空数组
-    // 这样应用会尝试直接播放原始URL而不显示选集界面
-    console.log(`Found ${results.length} episodes, but returning empty array to avoid episode selection`);
-    return JSON.stringify([]);
+    // 按集数排序（确保顺序正确）
+    results.sort((a, b) => a.number - b.number);
+    
+    console.log(`Total episodes found: ${results.length}`);
+    results.forEach(ep => {
+        console.log(`Episode ${ep.number}: ${ep.title} -> ${ep.href}`);
+    });
+    
+    return JSON.stringify(results);
 }
 
 async function extractStreamUrl(url) {
