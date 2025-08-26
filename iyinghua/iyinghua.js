@@ -68,10 +68,6 @@ async function extractEpisodes(url) {
             }
         }
         
-        // 为了避免Sora应用的季度分组bug，将集数偏移到100+
-        // 这样可以避免episode.number == 1触发新季度的逻辑
-        number = number + 100;
-        
         results.push({
             href: href,
             number: number,
@@ -91,7 +87,7 @@ async function extractEpisodes(url) {
         while ((fallbackMatch = fallbackRegex.exec(html)) !== null) {
             const href = `http://www.iyinghua.com${fallbackMatch[1].trim()}`;
             const title = fallbackMatch[2].trim();
-            const number = results.length + 101; // 从101开始，避免季度分组问题
+            const number = results.length + 1;
             
             results.push({
                 href: href,
