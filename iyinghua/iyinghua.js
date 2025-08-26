@@ -127,16 +127,10 @@ async function extractEpisodes(url) {
     
     console.log(`Total episodes found: ${results.length}`);
     
-    // 为了避免Sora应用的剧集选择问题，直接返回第一集进行播放
-    // 这样可以绕过 "Missing controller or service" 错误
-    if (results.length > 0) {
-        const firstEpisode = results[0];
-        console.log(`Returning only first episode for direct playback: ${firstEpisode.title} -> ${firstEpisode.href}`);
-        return JSON.stringify([firstEpisode]);
-    } else {
-        console.log('No episodes found, returning empty array');
-        return JSON.stringify([]);
-    }
+    // 为了完全避免Sora应用的剧集选择问题，返回空数组
+    // 这样应用会尝试直接播放原始URL而不显示选集界面
+    console.log(`Found ${results.length} episodes, but returning empty array to avoid episode selection`);
+    return JSON.stringify([]);
 }
 
 async function extractStreamUrl(url) {
