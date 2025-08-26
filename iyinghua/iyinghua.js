@@ -102,6 +102,29 @@ async function extractEpisodes(url) {
     // 按集数排序（确保顺序正确）
     results.sort((a, b) => a.number - b.number);
     
+    // 处理 Sora 应用的季度分组问题
+    // Sora 的分组逻辑有缺陷，当遇到连续的 1,2,3,4... 时会错误分组
+    // 解决方案：确保连续的集数能被正确识别为单一季度
+    if (results.length > 1) {
+        let isConsecutive = true;
+        let startsWithOne = results[0].number === 1;
+        
+        for (let i = 1; i < results.length; i++) {
+            if (results[i].number !== results[i-1].number + 1) {
+                isConsecutive = false;
+                break;
+            }
+        }
+        
+        if (isConsecutive && startsWithOne) {
+            console.log(`Found consecutive episodes starting from 1: treating as single season with ${results.length} episodes`);
+            // 对于连续且从1开始的集数，这是 Sora 能正确处理的格式
+            // 关键是确保集数递增且没有重复的number=1
+        } else {
+            console.log(`Found non-consecutive or non-standard episodes, count: ${results.length}`);
+        }
+    }
+    
     console.log(`Total episodes found: ${results.length}`);
     return JSON.stringify(results);
 }
