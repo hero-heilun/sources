@@ -170,9 +170,11 @@ async function extractStreamUrl(url) {
     const response = await fetchv2(url);
     const html = await response.text();
     
-    // 首先尝试查找 changeplay 函数中的URL (这是实际使用的方法)
-    const changeplayRegex = /changeplay\(['"]([^'"]*)['"]\)/;
+    // 首先尝试查找 changeplay 函数中的URL (这是实际使用的方法)  
+    const changeplayRegex = /changeplay\(['"]([^'"]+)['"]\)/g;
+    console.log('HTML contains changeplay:', html.includes('changeplay'));
     const changeplayMatch = changeplayRegex.exec(html);
+    console.log('Regex match result:', changeplayMatch);
     
     if (changeplayMatch && changeplayMatch[1]) {
         let streamUrl = changeplayMatch[1].trim();
