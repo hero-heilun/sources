@@ -146,6 +146,23 @@ async function extractEpisodes(url) {
         console.log(`Episode ${ep.number}: ${ep.title} -> ${ep.href}`);
     });
     
+    // 特殊处理：如果只有一个"全集"，则为所有可能的集数创建映射
+    // 这样无论Sora请求哪一集都能播放
+    if (results.length === 1 && (results[0].title === "全集" || results[0].title.includes("全"))) {
+        const singleEpisode = results[0];
+        results.length = 0; // 清空数组
+        
+        // 为前24集创建相同的映射（覆盖大部分TV剧集场景）
+        for (let i = 1; i <= 24; i++) {
+            results.push({
+                href: singleEpisode.href,
+                number: i,
+                title: i === 1 ? singleEpisode.title : `Episode ${i}`
+            });
+        }
+        console.log(`Movie detected: Created episode mappings for episodes 1-24`);
+    }
+    
     return JSON.stringify(results);
 }
 
