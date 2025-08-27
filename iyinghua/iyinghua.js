@@ -22,14 +22,25 @@ async function extractDetails(url) {
     const response = await fetchv2(url);
     const html = await response.text();
 
+    // 提取简介
     const descriptionRegex = /<div class="info">([^<]+)<\/div>/;
     const descriptionMatch = descriptionRegex.exec(html);
     const description = descriptionMatch ? descriptionMatch[1].trim() : 'N/A';
+    
+    // 尝试提取别名
+    const aliasRegex = /别名[：:]([^<\n]+)/;
+    const aliasMatch = aliasRegex.exec(html);
+    const aliases = aliasMatch ? aliasMatch[1].trim() : 'N/A';
+    
+    // 尝试提取播出日期  
+    const airdateRegex = /(\d{4}年\d{1,2}月|\d{4}-\d{1,2}-\d{1,2}|\d{4}年)/;
+    const airdateMatch = airdateRegex.exec(html);
+    const airdate = airdateMatch ? airdateMatch[1].trim() : 'N/A';
 
     results.push({
         description: description,
-        aliases: 'N/A',
-        airdate: 'N/A'
+        aliases: aliases,
+        airdate: airdate
     });
 
     return JSON.stringify(results);
