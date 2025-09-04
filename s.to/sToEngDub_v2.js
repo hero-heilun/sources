@@ -8,7 +8,7 @@ async function searchResults(keyword) {
         const searchApiUrl = `https://s.to/ajax/seriesSearch?keyword=${encodedKeyword}`;
         const responseText = await soraFetch(searchApiUrl);
         sendLog('Fetch responseText:' + JSON.stringify(responseText));
-        const data = JSON.parse(responseText.body);
+        const data = responseText;
         sendLog('Fetch data:' + JSON.stringify(data));
         const transformedResults = data.map(serie => ({
             title: serie.name,
@@ -888,7 +888,15 @@ function voeShiftChars(str, shift) {
  */
 async function soraFetch(url, options = { headers: {}, method: 'GET', body: null }) {
     try {
-        return await fetchv2(url, options.headers ?? {}, options.method ?? 'GET', options.body ?? null);
+        const response = await fetchv2(url, options.headers ?? {}, options.method ?? 'GET', options.body ?? null);
+        if (response && response.body && typeof response.body === 'string') {
+            try {
+                return JSON.parse(response.body);
+            } catch (parseError) {
+                return response.body;
+            }
+        }
+        return response;
     } catch(e) {
         try {
             return await fetch(url, options);
