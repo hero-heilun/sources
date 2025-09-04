@@ -9,7 +9,7 @@ async function searchResults(keyword) {
         const responseText = await soraFetch(searchApiUrl);
 
         const data = await JSON.parse(responseText);
-
+        sendLog('Fetch data:' + data);
         const transformedResults = data.map(serie => ({
             title: serie.name,
             image: `https://s.to${serie.cover}`,
