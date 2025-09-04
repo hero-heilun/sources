@@ -8,7 +8,7 @@ async function searchResults(keyword) {
         const searchApiUrl = `https://s.to/ajax/seriesSearch?keyword=${encodedKeyword}`;
         const responseText = await soraFetch(searchApiUrl);
         sendLog('Fetch responseText:' + JSON.stringify(responseText));
-        const data = responseText;
+        const data = JSON.parse(responseText);
         sendLog('Fetch data:' + JSON.stringify(data));
         const transformedResults = data.map(serie => ({
             title: serie.name,
