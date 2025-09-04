@@ -9,7 +9,7 @@
 
 ---
 > [!CAUTION] 
-> These modules are licensed **exclusively for use within the [Sora/Sulfur iOS app](https://github.com/cranci1/Sora)**.
+> These modules are licensed **exclusively for use within the [Sora/Sulfur iOS app](https://github.com/hero-heilun/flutter-sora-2/tree/main)**.
 >
 > **Do not pay to use them — if someone is charging you, it's a scam.**  
 
