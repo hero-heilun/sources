@@ -6,7 +6,7 @@ async function searchResults(keyword) {
     try {
         const encodedKeyword = encodeURIComponent(keyword);
         const searchApiUrl = `https://s.to/ajax/seriesSearch?keyword=${encodedKeyword}`;
-        const responseText = await fetch(searchApiUrl);
+        const responseText = await soraFetch(searchApiUrl);
 
         const data = await JSON.parse(responseText);
 
@@ -27,7 +27,7 @@ async function searchResults(keyword) {
 async function extractDetails(url) {
     try {
         const fetchUrl = `${url}`;
-        const response = await fetch(fetchUrl);
+        const response = await soraFetch(fetchUrl);
         const text = response.text ? await response.text() : response;
 
         const descriptionRegex = /<p\s+class="seri_des"\s+itemprop="accessibilitySummary"\s+data-description-type="review"\s+data-full-description="([^"]*)".*?>(.*?)<\/p>/s;
@@ -64,7 +64,7 @@ async function extractEpisodes(url) {
     try {
         const baseUrl = 'https://s.to';
         const fetchUrl = `${url}`;
-        const response = await fetch(fetchUrl);
+        const response = await soraFetch(fetchUrl);
         const html = response.text ? await response.text() : response;
 
         const finishedList = [];
@@ -94,7 +94,7 @@ async function extractStreamUrl(url) {
   try {
     const baseUrl = 'https://s.to';
     const fetchUrl = `${url}`;
-    const response = await fetch(fetchUrl);
+    const response = await soraFetch(fetchUrl);
     const text = response.text ? await response.text() : response;
 
     const finishedList = [];
@@ -125,7 +125,7 @@ async function extractStreamUrl(url) {
       const providerName = value;
       
       // fetch the provider link and extract the stream URL
-      const streamUrl = await fetch(providerLink);
+      const streamUrl = await soraFetch(providerLink);
       console.log("Stream URL: " + streamUrl);
     const winLocRegex = /window\.location\.href\s*=\s*['"]([^'"]+)['"]/;
       const winLocMatch = await winLocRegex.exec(streamUrl);
@@ -227,7 +227,7 @@ async function sendLog(message) {
     console.log(message);
     return;
 
-    await fetch('http://192.168.2.130/sora-module/log.php?action=add&message=' + encodeURIComponent(message))
+    await soraFetch('http://192.168.2.130/sora-module/log.php?action=add&message=' + encodeURIComponent(message))
     .catch(error => {
         console.error('Error sending log:', error);
     });
@@ -263,7 +263,7 @@ async function fetchSeasonEpisodes(url) {
     try {
         const baseUrl = 'https://s.to';
         const fetchUrl = `${url}`;
-        const text = await fetch(fetchUrl);
+        const text = await soraFetch(fetchUrl);
 
         // Updated regex to allow empty <strong> content
         const regex = /<td class="seasonEpisodeTitle">\s*<a[^>]*href="([^"]+)"[^>]*>.*?<strong>([^<]*)<\/strong>.*?<span>([^<]+)<\/span>.*?<\/a>/g;
@@ -630,7 +630,7 @@ async function doodstreamExtractor(html, url = null) {
         const token = md5Path.substring(md5Path.lastIndexOf("/") + 1);
         const expiryTimestamp = new Date().valueOf();
         const random = randomStr(10);
-        const passResponse = await fetch(`https://${streamDomain}/pass_md5/${md5Path}`, {
+        const passResponse = await soraFetch(`https://${streamDomain}/pass_md5/${md5Path}`, {
             headers: {
                 "Referer": url,
             },
