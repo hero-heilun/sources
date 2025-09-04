@@ -11,7 +11,7 @@
     "quality": "1080p",
     "baseUrl": "https://animexin.dev/",
     "searchBaseUrl": "https://animexin.dev/",
-    "scriptUrl": "https://raw.githubusercontent.com/50n50/sources/refs/heads/main/animexin/animexin.js",
+    "scriptUrl": "https://raw.githubusercontent.com/hero-heilun/sources/refs/heads/main/animexin/animexin.js",
     "type": "anime",
     "asyncJS": true,
     "softsub": false,

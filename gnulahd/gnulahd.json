@@ -11,7 +11,7 @@
     "quality": "1080p",
     "baseUrl": "https://ww3.gnulahd.nu/",
     "searchBaseUrl": "https://ww3.gnulahd.nu/",
-    "scriptUrl": "https://raw.githubusercontent.com/50n50/sources/refs/heads/main/gnulahd/gnulahd.js",
+    "scriptUrl": "https://raw.githubusercontent.com/hero-heilun/sources/refs/heads/main/gnulahd/gnulahd.js",
     "type": "anime/shows/movies",
     "asyncJS": true,
     "softsub": true,

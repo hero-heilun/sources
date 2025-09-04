@@ -11,7 +11,7 @@
     "quality": "N/A",
     "baseUrl": "https://readnovelfull.com/",
     "searchBaseUrl": "https://readnovelfull.com/search/?wd=%s",
-    "scriptUrl": "https://raw.githubusercontent.com/50n50/sources/refs/heads/main/readnovelfull/readnovelfull.js",
+    "scriptUrl": "https://raw.githubusercontent.com/hero-heilun/sources/refs/heads/main/readnovelfull/readnovelfull.js",
     "type": "novels",
     "asyncJS": true,
     "novel": true,

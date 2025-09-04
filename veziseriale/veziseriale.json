@@ -11,7 +11,7 @@
     "quality": "1080p",
     "baseUrl": "https://www3.veziseriale.org//",
     "searchBaseUrl": "https://www3.veziseriale.org/?s=",
-    "scriptUrl": "https://raw.githubusercontent.com/50n50/sources/refs/heads/main/veziseriale/veziseriale.js",
+    "scriptUrl": "https://raw.githubusercontent.com/hero-heilun/sources/refs/heads/main/veziseriale/veziseriale.js",
     "type": "shows/movies",
     "asyncJS": true,
     "softsub": false,

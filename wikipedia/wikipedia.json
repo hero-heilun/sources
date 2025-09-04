@@ -1,9 +1,9 @@
 {
     "sourceName": "Public Domain in the US",
-    "iconUrl": "https://raw.githubusercontent.com/50n50/sources/refs/heads/main/wikipedia/wikipedia-logo.png",
+    "iconUrl": "https://raw.githubusercontent.com/hero-heilun/sources/refs/heads/main/wikipedia/wikipedia-logo.png",
     "author": {
         "name": "Sulfur",
-        "icon": "https://raw.githubusercontent.com/50n50/sources/refs/heads/main/asset.png"
+        "icon": "https://raw.githubusercontent.com/hero-heilun/sources/refs/heads/main/asset.png"
     },
     "version": "1.0.0",
     "language": "English",
@@ -11,7 +11,7 @@
     "quality": "720p",
     "baseUrl": "https://en.wikipedia.org/wiki/List_of_films_in_the_public_domain_in_the_United_States",
     "searchBaseUrl": "https://en.wikipedia.org/wiki/List_of_films_in_the_public_domain_in_the_United_States",
-    "scriptUrl": "https://raw.githubusercontent.com/50n50/sources/refs/heads/main/wikipedia/wikipedia.js",
+    "scriptUrl": "https://raw.githubusercontent.com/hero-heilun/sources/refs/heads/main/wikipedia/wikipedia.js",
     "asyncJS": true,
     "streamAsyncJS": false
 }

@@ -11,7 +11,7 @@
     "quality": "1080p",
     "baseUrl": "https://animeq.blog/",
     "searchBaseUrl": "https://animeq.blog/",
-    "scriptUrl": "https://raw.githubusercontent.com/50n50/sources/refs/heads/main/animeq/animeq.js",
+    "scriptUrl": "https://raw.githubusercontent.com/hero-heilun/sources/refs/heads/main/animeq/animeq.js",
     "type": "anime",
     "asyncJS": true,
     "softsub": false,

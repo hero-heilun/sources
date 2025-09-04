@@ -11,7 +11,7 @@
     "quality": "1080p",
     "baseUrl": "https://www.dmand5.com/",
     "searchBaseUrl": "https://www.dmand5.com/",
-    "scriptUrl": "https://raw.githubusercontent.com/50n50/sources/refs/heads/main/dmand5/dmand5.js",
+    "scriptUrl": "https://raw.githubusercontent.com/hero-heilun/sources/refs/heads/main/dmand5/dmand5.js",
     "type": "anime",
     "asyncJS": true,
     "softsub": false,

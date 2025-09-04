@@ -11,5 +11,5 @@
     "quality": "720p",
     "baseUrl": "https://samehadaku.mba/",
     "searchBaseUrl": "https://samehadaku.mba/?s=%s",
-    "scriptUrl": "https://raw.githubusercontent.com/50n50/sources/refs/heads/main/samehadaku/samehadaku.js"
+    "scriptUrl": "https://raw.githubusercontent.com/hero-heilun/sources/refs/heads/main/samehadaku/samehadaku.js"
 }

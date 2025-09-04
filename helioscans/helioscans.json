@@ -11,7 +11,7 @@
     "quality": "N/A",
     "baseUrl": "https://helioscans.com/",
     "searchBaseUrl": "https://helioscans.com/%s",
-    "scriptUrl": "https://raw.githubusercontent.com/50n50/sources/refs/heads/main/helioscans/helioscans.js",
+    "scriptUrl": "https://raw.githubusercontent.com/hero-heilun/sources/refs/heads/main/helioscans/helioscans.js",
     "type": "novels",
     "asyncJS": true,
     "novel": true,
